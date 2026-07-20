@@ -66,7 +66,7 @@
                 <svg class="w-5 h-5 text-navy" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 5h16M4 5a2 2 0 00-2 2v9a2 2 0 002 2h11l3 3v-3h1a2 2 0 002-2V7a2 2 0 00-2-2H4z"/></svg>
             </div>
             <div>
-                <p class="text-[11px] font-bold text-slate-400 tracking-wide">TOTAL</p>
+                <p class="text-[11px] font-bold text-slate-400 tracking-wide">TOTAL {{ $tahun }}</p>
                 <p class="text-2xl font-extrabold text-slate-800">{{ number_format($stats['total'], 0, ',', '.') }}</p>
             </div>
         </div>
@@ -102,7 +102,7 @@
         </div>
     </div>
 
-    {{-- ================= TABS + SEARCH ================= --}}
+    {{-- ================= TABS + SEARCH + FILTER TAHUN ================= --}}
     <form method="GET" class="bg-white rounded-2xl p-3 card-shadow mb-6 flex flex-wrap items-center justify-between gap-3">
         <div class="flex flex-wrap items-center gap-2">
             @php
@@ -122,16 +122,31 @@
             @endforeach
         </div>
 
-        <input type="hidden" name="filter" value="{{ $filter }}">
-        @if(request('skpd'))
-            <input type="hidden" name="skpd" value="{{ request('skpd') }}">
-        @endif
-        <div class="relative">
-            <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/>
-            </svg>
-            <input type="text" name="tracking_id" value="{{ request('tracking_id') }}" placeholder="Cari Tracking ID atau Nama..."
-                   class="bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-navy/30">
+        <div class="flex flex-wrap items-center gap-2">
+            <input type="hidden" name="filter" value="{{ $filter }}">
+            @if(request('skpd'))
+                <input type="hidden" name="skpd" value="{{ request('skpd') }}">
+            @endif
+
+            {{-- ============ DROPDOWN FILTER TAHUN ============ --}}
+            {{-- Default nampilin tahun berjalan. Ganti tahun -> auto submit form -> data ganti ke tahun itu. --}}
+            <select name="tahun" onchange="this.form.submit()"
+                    class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold text-slate-600
+                           focus:outline-none focus:ring-2 focus:ring-navy/30 cursor-pointer">
+                @foreach($availableYears as $year)
+                    <option value="{{ $year }}" {{ (int) $tahun === (int) $year ? 'selected' : '' }}>
+                        {{ $year }}
+                    </option>
+                @endforeach
+            </select>
+
+            <div class="relative">
+                <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/>
+                </svg>
+                <input type="text" name="tracking_id" value="{{ request('tracking_id') }}" placeholder="Cari Tracking ID atau Nama..."
+                       class="bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-navy/30">
+            </div>
         </div>
     </form>
 
@@ -139,12 +154,13 @@
     {{--
         id + data-next-page-url dipakai sama script infinite scroll di bawah.
         nextPageUrl() otomatis null kalau ini halaman terakhir, jadi script tau kapan berhenti.
+        Parameter "tahun" ikut kebawa otomatis di nextPageUrl() karena paginate()->withQueryString().
     --}}
     <div id="pengaduan-table-card" class="bg-white rounded-2xl card-shadow overflow-hidden"
          data-next-page-url="{{ $pengaduan->nextPageUrl() }}">
         <div class="flex items-center justify-between px-6 py-5">
             <h2 class="font-bold text-slate-800">Daftar Pengaduan</h2>
-            <span class="text-sm text-slate-400">Menampilkan <span id="pengaduan-shown-count">{{ $pengaduan->count() }}</span> dari {{ number_format($totalData, 0, ',', '.') }} data</span>
+            <span class="text-sm text-slate-400">Menampilkan <span id="pengaduan-shown-count">{{ $pengaduan->count() }}</span> dari {{ number_format($totalData, 0, ',', '.') }} data tahun {{ $tahun }}</span>
         </div>
 
         <div class="overflow-x-auto">
@@ -291,7 +307,7 @@
                     @empty
                     <tr>
                         <td colspan="30" class="px-6 py-10 text-center text-slate-400">
-                            Belum ada data. Klik "Tambah Pengaduan" buat upload file Excel.
+                            Belum ada data untuk tahun {{ $tahun }}. Klik "Tambah Pengaduan" buat upload file Excel, atau ganti filter tahun di atas.
                         </td>
                     </tr>
                     @endforelse

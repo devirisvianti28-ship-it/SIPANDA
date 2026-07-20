@@ -34,7 +34,7 @@
             </div>
             <p class="text-[11px] font-semibold text-slate-400 tracking-wide">PROSES</p>
             <p class="text-2xl font-extrabold text-slate-800 mt-1">{{ $stats['proses'] }}</p>
-            <p class="text-xs text-slate-400 mt-1">Sedang Verifikasi</p>
+            <p class="text-xs text-slate-400 mt-1">Sudah Ditanggapi, Belum Selesai</p>
         </div>
 
         <div class="bg-white rounded-2xl p-4 card-shadow">
@@ -65,9 +65,16 @@
                     <h2 class="font-bold text-slate-800">Tren Pengaduan Bulanan</h2>
                     <p class="text-xs text-slate-400 mt-0.5">Statistik pengaduan masuk tahun {{ $tahunAktif }}</p>
                 </div>
+                {{-- ============ TOGGLE TAHUN INI / TAHUN LALU ============ --}}
                 <div class="flex bg-slate-100 rounded-full p-1 text-xs font-semibold">
-                    <button class="px-3 py-1.5 rounded-full bg-navy text-white">Tahun Ini</button>
-                    <button class="px-3 py-1.5 rounded-full text-slate-500">Tahun Lalu</button>
+                    <a href="{{ route('dashboard', ['tahun' => now()->year]) }}"
+                       class="px-3 py-1.5 rounded-full transition {{ $tahunAktif === now()->year ? 'bg-navy text-white' : 'text-slate-500 hover:text-navy' }}">
+                        Tahun Ini
+                    </a>
+                    <a href="{{ route('dashboard', ['tahun' => now()->year - 1]) }}"
+                       class="px-3 py-1.5 rounded-full transition {{ $tahunAktif === (now()->year - 1) ? 'bg-navy text-white' : 'text-slate-500 hover:text-navy' }}">
+                        Tahun Lalu
+                    </a>
                 </div>
             </div>
             <canvas id="trenChart" height="110"></canvas>
@@ -75,6 +82,9 @@
 
         <div class="bg-white rounded-2xl p-6 card-shadow flex flex-col">
             <h2 class="font-bold text-slate-800 mb-4">Status Pengaduan</h2>
+            {{-- Hanya 2 kategori: Selesai / Belum Selesai — persis sama seperti kolom
+                 `status` di tabel pengaduan (Data Pengaduan & Monitoring SKPD juga
+                 pakai 2 nilai ini, bukan "Pending"/"Diproses"). --}}
             <div class="relative flex-1 flex items-center justify-center">
                 <canvas id="statusDonut" width="200" height="200"></canvas>
                 <div class="absolute text-center">
@@ -102,10 +112,10 @@
         <div class="bg-white rounded-2xl p-6 card-shadow">
             <div class="flex items-center justify-between mb-5">
                 <h2 class="font-bold text-slate-800">Top 5 SKPD Terbanyak</h2>
-                <a href="#" class="text-sm font-semibold text-navy">Lihat Semua</a>
+                <a href="{{ route('monitoring-skpd', ['tahun' => $tahunAktif]) }}" class="text-sm font-semibold text-navy">Lihat Semua</a>
             </div>
             <div class="space-y-5">
-                @foreach($topSkpd as $skpd)
+                @forelse($topSkpd as $skpd)
                 <div>
                     <div class="flex items-center justify-between mb-1.5">
                         <p class="text-sm font-semibold text-slate-700">{{ $skpd['nama'] }}</p>
@@ -115,16 +125,18 @@
                         <div class="h-full bg-navy rounded-full" style="width: {{ $skpd['persen'] }}%"></div>
                     </div>
                 </div>
-                @endforeach
+                @empty
+                <p class="text-sm text-slate-400">Belum ada data SKPD untuk tahun {{ $tahunAktif }}.</p>
+                @endforelse
             </div>
         </div>
 
         <div class="bg-white rounded-2xl p-6 card-shadow flex flex-col">
             <h2 class="font-bold text-slate-800 mb-4">Laju Penyelesaian</h2>
             <canvas id="lajuChart" class="flex-1" height="140"></canvas>
-            <p class="text-sm font-semibold text-navy mt-4 flex items-center gap-1">
+            <p class="text-sm font-semibold {{ $lajuKenaikan >= 0 ? 'text-navy' : 'text-red-500' }} mt-4 flex items-center gap-1">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8M21 7v6h-6"/></svg>
-                +{{ $lajuKenaikan }}% Penyelesaian lebih cepat bulan ini
+                {{ $lajuKenaikan >= 0 ? '+' : '' }}{{ $lajuKenaikan }}% Penyelesaian {{ $lajuKenaikan >= 0 ? 'lebih cepat' : 'lebih lambat' }} minggu ini
             </p>
         </div>
     </div>
@@ -133,7 +145,7 @@
     <div class="bg-white rounded-2xl card-shadow mb-6 overflow-hidden">
         <div class="flex items-center justify-between px-6 py-5">
             <h2 class="font-bold text-slate-800">Aktivitas Terbaru</h2>
-            <a href="#" class="text-sm font-semibold text-navy">Lihat Semua Data</a>
+            <a href="{{ route('data-pengaduan') }}" class="text-sm font-semibold text-navy">Lihat Semua Data</a>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
@@ -145,58 +157,46 @@
                         <th class="px-3 py-3 font-semibold">Judul Pengaduan</th>
                         <th class="px-3 py-3 font-semibold">SKPD Terkait</th>
                         <th class="px-3 py-3 font-semibold">Tanggapan</th>
-                        <th class="px-3 py-3 font-semibold">Keterangan</th>
+                        <th class="px-3 py-3 font-semibold">Status</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($aktivitas as $row)
+                    @forelse($aktivitas as $row)
                     <tr class="border-b border-slate-50 last:border-0">
-                        <td class="px-6 py-4"><a href="#" class="font-semibold text-navy">{{ $row['tracking_id'] }}</a></td>
+                        <td class="px-6 py-4">
+                            <a href="{{ route('data-pengaduan', ['tracking_id' => $row['tracking_id']]) }}" class="font-semibold text-navy">{{ $row['tracking_id'] }}</a>
+                        </td>
                         <td class="px-3 py-4 text-slate-500">{{ $row['tanggal'] }}</td>
                         <td class="px-3 py-4 font-semibold text-slate-700">{{ $row['pelapor'] }}</td>
                         <td class="px-3 py-4 text-slate-600">{{ $row['judul'] }}</td>
                         <td class="px-3 py-4 text-slate-600">{{ $row['skpd'] }}</td>
                         <td class="px-3 py-4">
                             @if($row['sudah_ditanggapi'])
-                                <span class="inline-block text-xs font-semibold bg-blue-50 text-navy px-3 py-1 rounded-full">Sudah ada tanggapan</span>
+                                <span class="inline-block text-xs font-semibold bg-blue-50 text-navy px-3 py-1 rounded-full">Sudah Ada Tanggapan</span>
                             @else
-                                <span class="inline-block text-xs font-semibold bg-red-50 text-red-500 px-3 py-1 rounded-full">Belum ada tanggapan</span>
+                                <span class="inline-block text-xs font-semibold bg-red-50 text-red-500 px-3 py-1 rounded-full">Belum Ada Tanggapan</span>
                             @endif
                         </td>
                         <td class="px-3 py-4">
-                            @if($row['status'] === 'Selesai')
-                                <span class="inline-block text-xs font-semibold bg-blue-100 text-navy px-3 py-1 rounded-full">Selesai</span>
-                            @else
-                                <span class="inline-block text-xs font-semibold bg-red-100 text-red-500 px-3 py-1 rounded-full">Pending</span>
-                            @endif
+                            {{-- Render LANGSUNG nilai kolom `status` dari database.
+                                 Nilainya cuma "Selesai" atau "Belum Selesai" —
+                                 sama persis kayak di halaman Data Pengaduan,
+                                 tidak dikarang jadi "Pending" di sini. --}}
+                            <span class="inline-block text-xs font-semibold px-3 py-1 rounded-full
+                                {{ $row['status'] === 'Selesai' ? 'bg-blue-100 text-navy' : 'bg-red-100 text-red-500' }}">
+                                {{ $row['status'] }}
+                            </span>
                         </td>
                     </tr>
-                    @endforeach
+                    @empty
+                    <tr>
+                        <td colspan="7" class="px-6 py-8 text-center text-slate-400">Belum ada aktivitas pengaduan.</td>
+                    </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
     </div>
-
-    {{-- ================= QUICK ACTIONS ================= --}}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <button class="bg-white rounded-2xl card-shadow py-5 flex flex-col items-center gap-2 font-semibold text-slate-700 hover:bg-slate-50">
-            <svg class="w-5 h-5 text-navy" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"/></svg>
-            Import Excel
-        </button>
-        <button class="bg-white rounded-2xl card-shadow py-5 flex flex-col items-center gap-2 font-semibold text-slate-700 hover:bg-slate-50">
-            <svg class="w-5 h-5 text-navy" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 19h16M6 15l4-5 3 3 5-7"/></svg>
-            Lihat Monitoring
-        </button>
-        <button class="bg-white rounded-2xl card-shadow py-5 flex flex-col items-center gap-2 font-semibold text-slate-700 hover:bg-slate-50">
-            <svg class="w-5 h-5 text-navy" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
-            Export Laporan
-        </button>
-        <button class="bg-white rounded-2xl card-shadow py-5 flex flex-col items-center gap-2 font-semibold text-slate-700 hover:bg-slate-50">
-            <svg class="w-5 h-5 text-navy" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
-            Log Aktivitas
-        </button>
-    </div>
-
 @endsection
 
 @push('scripts')
@@ -269,4 +269,3 @@
     });
 </script>
 @endpush
-

@@ -16,17 +16,16 @@ class MonitoringSkpdController extends Controller
     {
         $tahun = $request->input('tahun', now()->year);
         $bulan = $request->input('bulan'); // 1-12, boleh kosong = semua bulan
-        $tracking = $request->input('tracking');
+
+        // ============ CARI BERDASARKAN NAMA SKPD ============
+        // Halaman ini isinya daftar per-SKPD, jadi pencariannya juga
+        // berdasarkan nama SKPD (bukan tracking ID/pelapor lagi).
+        $namaSkpd = $request->input('nama_skpd');
 
         $query = Pengaduan::query()
             ->whereYear('tanggal', $tahun)
             ->when($bulan, fn ($q) => $q->whereMonth('tanggal', $bulan))
-            ->when($tracking, function ($q) use ($tracking) {
-                $q->where(function ($qq) use ($tracking) {
-                    $qq->where('tracking_id', 'like', "%{$tracking}%")
-                       ->orWhere('pelapor', 'like', "%{$tracking}%");
-                });
-            })
+            ->when($namaSkpd, fn ($q) => $q->where('skpd', 'like', "%{$namaSkpd}%"))
             ->whereNotNull('skpd');
 
         // ================= AGREGASI PER SKPD =================
