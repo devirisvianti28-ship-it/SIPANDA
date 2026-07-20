@@ -10,6 +10,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\BannerController;
 use App\Http\Controllers\PengaduanImportController;
+use App\Http\Controllers\ProfilController;
 
 /*
 |--------------------------------------------------------------------------
@@ -37,6 +38,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/data-pengaduan', [DataPengaduanController::class, 'index'])->name('data-pengaduan');
     Route::get('/monitoring-skpd', [MonitoringSkpdController::class, 'index'])->name('monitoring-skpd');
+
+    // ---------- Profil ----------
+    Route::get('/profil', [ProfilController::class, 'show'])->name('profil');
+    Route::put('/profil', [ProfilController::class, 'update'])->name('profil.update');
 });
 
 Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan');

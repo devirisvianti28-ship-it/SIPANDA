@@ -99,7 +99,8 @@
                     </svg>
                     Kelola Banner
                 </a>
-                <a href="#" class="nav-item flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm text-blue-100/90 font-medium">
+                <a href="{{ route('profil') }}"
+                   class="nav-item {{ request()->routeIs('profil') ? 'active' : '' }} flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('profil') ? '' : 'text-blue-100/90' }} font-medium">
                     <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>
                     </svg>
@@ -145,20 +146,28 @@
                         <span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
                     </button>
 
-                    <button class="text-navy">
+                    <a href="{{ route('profil') }}" class="text-navy">
                         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <circle cx="12" cy="12" r="3"/>
                             <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
                         </svg>
-                    </button>
+                    </a>
 
-                    <div class="flex items-center gap-3">
+                    <a href="{{ route('profil') }}" class="flex items-center gap-3">
                         <div class="text-right leading-tight">
-                            <p class="text-sm font-semibold text-slate-800">{{ $userName ?? 'Azizah' }}</p>
-                            <p class="text-xs text-slate-400">{{ $userRole ?? 'Diskominfo Garut' }}</p>
+                            <p class="text-sm font-semibold text-slate-800">{{ auth()->user()->nama_lengkap ?? auth()->user()->name }}</p>
+                            <p class="text-xs text-slate-400">{{ auth()->user()->peran ?? 'Pengguna' }}</p>
                         </div>
-                        <img src="https://i.pravatar.cc/80?img=47" alt="{{ $userName ?? 'Azizah' }}" class="w-10 h-10 rounded-full object-cover">
-                    </div>
+                        @if(auth()->user()->foto_profil ?? false)
+                            <img src="{{ asset('storage/'.auth()->user()->foto_profil) }}"
+                                 alt="{{ auth()->user()->nama_lengkap ?? auth()->user()->name }}"
+                                 class="w-10 h-10 rounded-full object-cover">
+                        @else
+                            <div class="w-10 h-10 rounded-full bg-navy text-white flex items-center justify-center text-sm font-bold">
+                                {{ strtoupper(substr(auth()->user()->nama_lengkap ?? auth()->user()->name, 0, 1)) }}
+                            </div>
+                        @endif
+                    </a>
                 </div>
             </header>
 

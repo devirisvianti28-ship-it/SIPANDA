@@ -16,13 +16,17 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
+
     protected $fillable = [
-        'nip',
-        'name',
-        'username',
-        'email',
-        'password',
-    ];
+    'nip',
+    'name',
+    'username',
+    'email',
+    'password',
+    'nama_lengkap',
+    'peran',
+    'foto_profil',
+];
 
     /**
      * Kolom yang disembunyikan saat model di-serialize (misal ke JSON).
