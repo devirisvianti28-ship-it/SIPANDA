@@ -11,6 +11,7 @@ use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\BannerController;
 use App\Http\Controllers\PengaduanImportController;
 use App\Http\Controllers\ProfilController;
+use App\Http\Controllers\UserController; 
 
 /*
 |--------------------------------------------------------------------------
@@ -72,3 +73,20 @@ Route::post('/pengaduan/import/pdf', [PengaduanImportController::class, 'importP
 
 Route::patch('/pengaduan/{pengaduan}/update-tanggapan', [App\Http\Controllers\DataPengaduanController::class, 'updateTanggapan'])
     ->name('pengaduan.update-tanggapan');
+
+
+Route::middleware(['auth'])->group(function () {
+
+    Route::get('/manajemen-pengguna', [UserController::class, 'index'])
+        ->name('manajemen-pengguna.index');
+
+    Route::post('/manajemen-pengguna', [UserController::class, 'store'])
+        ->name('manajemen-pengguna.store');
+
+    Route::put('/manajemen-pengguna/{user}', [UserController::class, 'update'])
+        ->name('manajemen-pengguna.update');
+
+    Route::delete('/manajemen-pengguna/{user}', [UserController::class, 'destroy'])
+        ->name('manajemen-pengguna.destroy');
+
+});
