@@ -94,22 +94,44 @@ class MonitoringSkpdController extends Controller
                 ];
             });
 
-        // ================= TREN PENYELESAIAN 7 HARI TERAKHIR =================
-        $labelHari = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
-        $trenLabels = [];
-        $trenData = [];
+        // ================= TREN PENYELESAIAN: PER BULAN & PER TAHUN =================
 
-        for ($i = 6; $i >= 0; $i--) {
-            $tanggal = Carbon::today()->subDays($i);
-            $trenLabels[] = $labelHari[$tanggal->dayOfWeek];
-            $trenData[] = Pengaduan::whereDate('tanggal', $tanggal)
-                ->where('status', 'Selesai')
-                ->count();
-        }
+        // --- Per Bulan (untuk tahun yang difilter, ikut filter nama_skpd juga) ---
+        $trenBulananRaw = (clone $query)
+            ->where('status', 'Selesai')
+            ->selectRaw('MONTH(tanggal) as bulan, COUNT(*) as jumlah')
+            ->groupBy('bulan')
+            ->pluck('jumlah', 'bulan');
+
+        $labelBulanSingkat = [
+            1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'Mei', 6 => 'Jun',
+            7 => 'Jul', 8 => 'Agu', 9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des',
+        ];
+
+        $trenBulanan = [
+            'labels' => array_values($labelBulanSingkat),
+            'data' => collect(range(1, 12))->map(fn ($b) => $trenBulananRaw[$b] ?? 0)->values(),
+        ];
+
+        // --- Per Tahun (lintas tahun, ikut filter bulan & nama_skpd kalau diisi, TAPI lepas filter tahun) ---
+        $trenTahunanRaw = Pengaduan::query()
+            ->when($bulan, fn ($q) => $q->whereMonth('tanggal', $bulan))
+            ->when($namaSkpd, fn ($q) => $q->where('skpd', 'like', "%{$namaSkpd}%"))
+            ->whereNotNull('skpd')
+            ->where('status', 'Selesai')
+            ->selectRaw('YEAR(tanggal) as tahun, COUNT(*) as jumlah')
+            ->groupBy('tahun')
+            ->orderBy('tahun')
+            ->get();
+
+        $trenTahunan = [
+            'labels' => $trenTahunanRaw->pluck('tahun')->map(fn ($t) => (string) $t)->values(),
+            'data' => $trenTahunanRaw->pluck('jumlah')->values(),
+        ];
 
         $trenPenyelesaian = [
-            'labels' => $trenLabels,
-            'data' => $trenData,
+            'bulanan' => $trenBulanan,
+            'tahunan' => $trenTahunan,
         ];
 
         // ================= DROPDOWN FILTER =================

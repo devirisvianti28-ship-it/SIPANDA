@@ -110,7 +110,6 @@
                     'semua' => 'Semua Data',
                     'selesai' => 'Selesai',
                     'belum_selesai' => 'Belum Selesai',
-                    'belum_tanggapan' => 'Belum Ada Tanggapan',
                 ];
             @endphp
             @foreach($tabs as $key => $label)
@@ -129,7 +128,6 @@
             @endif
 
             {{-- ============ DROPDOWN FILTER TAHUN ============ --}}
-            {{-- Default nampilin tahun berjalan. Ganti tahun -> auto submit form -> data ganti ke tahun itu. --}}
             <select name="tahun" onchange="this.form.submit()"
                     class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold text-slate-600
                            focus:outline-none focus:ring-2 focus:ring-navy/30 cursor-pointer">
@@ -152,9 +150,28 @@
 
     {{-- ================= TABEL ================= --}}
     {{--
-        id + data-next-page-url dipakai sama script infinite scroll di bawah.
-        nextPageUrl() otomatis null kalau ini halaman terakhir, jadi script tau kapan berhenti.
-        Parameter "tahun" ikut kebawa otomatis di nextPageUrl() karena paginate()->withQueryString().
+        CATATAN PERUBAHAN LAYOUT TABEL (biar tidak renggang):
+        1. Ukuran font tabel diturunkan dari text-sm -> text-xs
+        2. Padding cell diturunkan dari px-3 py-2 -> px-2 py-1.5
+        3. whitespace-nowrap DIHAPUS dari kolom-kolom berisi teks panjang
+           (Keterangan, Klasifikasi, Kategori, Judul, Isi Laporan Awal/Akhir,
+           Instansi Induk, SKPD, Alasan Tunda/Arsip) supaya teks wrap +
+           dibatasi lebar maksimal (max-w-[...]) alih-alih memaksa kolom melebar.
+        4. Kolom pendek (No, Tanggal, Waktu, ID Kategori, Rating, dll) tetap
+           whitespace-nowrap karena isinya memang singkat.
+
+        CATATAN PERUBAHAN MAPPING KOLOM (fix kebalik):
+        - "Status Penyelesaian" SEKARANG read-only, nampilin status mentah
+          dari Excel ($row->status_laporan_raw), sama persis kayak kolom
+          "Status Laporan" di sebelah kanan (memang sengaja dobel, sesuai
+          permintaan, biar gampang dilihat tanpa geser scroll ke kanan).
+        - "Keterangan" SEKARANG jadi dropdown Selesai / Belum Selesai yang
+          bisa diedit admin (sebelumnya ini yang nempel di "Status
+          Penyelesaian"). Field yang dikirim ke server tetap `status`,
+          jadi controller & validasi TIDAK perlu diubah.
+        - Catatan teks bebas yang dulu ada di sini (kolom `keterangan` di DB)
+          sudah tidak ada slot edit-nya langsung di tabel, tapi datanya
+          tetap tersimpan & masih ditampilkan di panel Detail Pengaduan.
     --}}
     <div id="pengaduan-table-card" class="bg-white rounded-2xl card-shadow overflow-hidden"
          data-next-page-url="{{ $pengaduan->nextPageUrl() }}">
@@ -164,50 +181,50 @@
         </div>
 
         <div class="overflow-x-auto">
-            <table class="w-full text-sm">
+            <table class="w-full text-xs border-collapse">
                 <thead>
-                    <tr class="text-left text-xs font-semibold text-slate-500 border-y border-slate-100 whitespace-nowrap">
-                        <th class="px-6 py-3">No.</th>
-                        <th class="px-3 py-3">Tracking ID</th>
-                        <th class="px-3 py-3">Tanggal</th>
-                        <th class="px-3 py-3">Waktu</th>
-                        <th class="px-3 py-3">Nama Pelapor</th>
-                        <th class="px-3 py-3 min-w-[180px]">Tanggapan</th>
-                        <th class="px-3 py-3 min-w-[180px]">Status Penyelesaian</th>
-                        <th class="px-3 py-3 min-w-[200px]">Keterangan</th>
-                        <th class="px-3 py-3">Klasifikasi Laporan</th>
-                        <th class="px-3 py-3">ID Kategori</th>
-                        <th class="px-3 py-3">Kategori</th>
-                        <th class="px-3 py-3 min-w-[200px]">Judul Laporan</th>
-                        <th class="px-3 py-3 min-w-[220px]">Isi Laporan Awal</th>
-                        <th class="px-3 py-3 min-w-[220px]">Isi Laporan Akhir</th>
-                        <th class="px-3 py-3">Tipe Laporan</th>
-                        <th class="px-3 py-3">Sumber Laporan</th>
-                        <th class="px-3 py-3">Instansi Induk</th>
-                        <th class="px-3 py-3">ID Instansi Terdisposisi</th>
-                        <th class="px-3 py-3">Instansi Terdisposisi (SKPD)</th>
-                        <th class="px-3 py-3">Status Laporan</th>
-                        <th class="px-3 py-3">Alasan Tunda/Arsip</th>
-                        <th class="px-3 py-3">Provinsi</th>
-                        <th class="px-3 py-3">Kabupaten</th>
-                        <th class="px-3 py-3">Kecamatan</th>
-                        <th class="px-3 py-3">Kelurahan</th>
-                        <th class="px-3 py-3">Nomor SK</th>
-                        <th class="px-3 py-3">Url SK</th>
-                        <th class="px-3 py-3">Url Dokumen Laporan Tahunan</th>
-                        <th class="px-3 py-3">Kanal Aduan Setwapres</th>
-                        <th class="px-3 py-3">Rating</th>
+                    <tr class="text-left text-[11px] font-semibold text-slate-500 bg-slate-50 whitespace-nowrap">
+                        <th class="border border-slate-200 px-2 py-1.5">No.</th>
+                        <th class="border border-slate-200 px-2 py-1.5">Tracking ID</th>
+                        <th class="border border-slate-200 px-2 py-1.5">Tanggal Laporan</th>
+                        <th class="border border-slate-200 px-2 py-1.5">Waktu Laporan</th>
+                        <th class="border border-slate-200 px-2 py-1.5">Nama Pelapor</th>
+                        <th class="border border-slate-200 px-2 py-1.5">Tanggapan</th>
+                        <th class="border border-slate-200 px-2 py-1.5">Keterangan</th>
+                        <th class="border border-slate-200 px-2 py-1.5">Status Penyelesaian</th>
+                        <th class="border border-slate-200 px-2 py-1.5">Klasifikasi Laporan</th>
+                        <th class="border border-slate-200 px-2 py-1.5">ID Kategori</th>
+                        <th class="border border-slate-200 px-2 py-1.5">Kategori</th>
+                        <th class="border border-slate-200 px-2 py-1.5">Judul Laporan</th>
+                        <th class="border border-slate-200 px-2 py-1.5">Isi Laporan Awal</th>
+                        <th class="border border-slate-200 px-2 py-1.5">Isi Laporan Akhir</th>
+                        <th class="border border-slate-200 px-2 py-1.5">Tipe Laporan</th>
+                        <th class="border border-slate-200 px-2 py-1.5">Sumber Laporan</th>
+                        <th class="border border-slate-200 px-2 py-1.5">Instansi Induk</th>
+                        <th class="border border-slate-200 px-2 py-1.5">ID Instansi Terdisposisi</th>
+                        <th class="border border-slate-200 px-2 py-1.5">Instansi Terdisposisi (SKPD)</th>
+                        <th class="border border-slate-200 px-2 py-1.5">Status Laporan</th>
+                        <th class="border border-slate-200 px-2 py-1.5">Alasan Tunda/Arsip</th>
+                        <th class="border border-slate-200 px-2 py-1.5">Provinsi</th>
+                        <th class="border border-slate-200 px-2 py-1.5">Kabupaten</th>
+                        <th class="border border-slate-200 px-2 py-1.5">Kecamatan</th>
+                        <th class="border border-slate-200 px-2 py-1.5">Kelurahan</th>
+                        <th class="border border-slate-200 px-2 py-1.5">Nomor SK</th>
+                        <th class="border border-slate-200 px-2 py-1.5">Url SK</th>
+                        <th class="border border-slate-200 px-2 py-1.5">Url Dokumen Laporan Tahunan</th>
+                        <th class="border border-slate-200 px-2 py-1.5">Kanal Aduan Setwapres</th>
+                        <th class="border border-slate-200 px-2 py-1.5">Rating</th>
                     </tr>
                 </thead>
                 <tbody id="pengaduan-tbody">
                     @forelse($pengaduan as $i => $row)
-                    <tr class="js-pengaduan-row border-b border-slate-50 last:border-0 align-top cursor-pointer hover:bg-slate-50/60 transition"
+                    <tr class="js-pengaduan-row cursor-pointer hover:bg-slate-50/60 transition align-top"
                         data-row-id="{{ $row->id }}"
                         data-tracking-id="{{ $row->tracking_id }}"
                         data-tanggal="{{ $row->tanggal ? $row->tanggal->format('d M Y') : '-' }}"
                         data-waktu="{{ $row->waktu ?? '-' }}"
                         data-pelapor="{{ $row->pelapor ?? '-' }}"
-                        data-sudah-ditanggapi="{{ $row->sudah_ditanggapi ? '1' : '0' }}"
+                        data-sudah-ditanggapi="{{ $row->status === 'Selesai' ? '1' : '0' }}"
                         data-status="{{ $row->status ?? 'Belum Selesai' }}"
                         data-keterangan="{{ $row->keterangan ?? '-' }}"
                         data-klasifikasi="{{ $row->klasifikasi ?? '-' }}"
@@ -232,81 +249,76 @@
                         data-url-dokumen="{{ $row->url_dokumen_laporan_tahunan ?? '' }}"
                         data-laporan-setwapres="{{ $row->laporan_setwapres ?? '-' }}"
                         data-rating="{{ $row->rating ?? '-' }}">
-                        <td class="px-6 py-5 text-slate-500 js-row-number">{{ $pengaduan->firstItem() + $i }}</td>
-                        <td class="px-3 py-5 whitespace-nowrap"><span class="font-bold text-navy">{{ $row->tracking_id }}</span></td>
-                        <td class="px-3 py-5 text-slate-500 whitespace-nowrap">
+                        <td class="border border-slate-200 px-2 py-1.5 text-slate-500 whitespace-nowrap js-row-number">{{ $pengaduan->firstItem() + $i }}</td>
+                        <td class="border border-slate-200 px-2 py-1.5 whitespace-nowrap"><span class="font-bold text-navy">{{ $row->tracking_id }}</span></td>
+                        <td class="border border-slate-200 px-2 py-1.5 text-slate-500 whitespace-nowrap">
                             {{ $row->tanggal ? $row->tanggal->format('d M Y') : '-' }}
                         </td>
-                        <td class="px-3 py-5 text-slate-500 whitespace-nowrap">{{ $row->waktu ?? '-' }}</td>
-                        <td class="px-3 py-5 font-semibold text-slate-700 whitespace-nowrap">{{ $row->pelapor ?? '-' }}</td>
+                        <td class="border border-slate-200 px-2 py-1.5 text-slate-500 whitespace-nowrap">{{ $row->waktu ?? '-' }}</td>
+                        <td class="border border-slate-200 px-2 py-1.5 font-semibold text-slate-700 max-w-[140px] truncate" title="{{ $row->pelapor }}">{{ $row->pelapor ?? '-' }}</td>
 
-                        <td class="px-3 py-5">
-                            <select class="js-update-tanggapan text-xs font-semibold rounded-full px-3 py-1.5 border-0 cursor-pointer
-                                {{ $row->sudah_ditanggapi ? 'bg-blue-50 text-navy' : 'bg-red-50 text-red-500' }}"
-                                data-id="{{ $row->id }}" data-field="sudah_ditanggapi">
-                                <option value="1" @selected($row->sudah_ditanggapi)>Sudah Ada Tanggapan</option>
-                                <option value="0" @selected(!$row->sudah_ditanggapi)>Belum Ada Tanggapan</option>
-                            </select>
+                        <td class="border border-slate-200 px-2 py-1.5 whitespace-nowrap">
+                            <input type="hidden" class="js-tanggapan-value" data-field="sudah_ditanggapi" value="{{ $row->status === 'Selesai' ? '1' : '0' }}">
+                            <span class="js-tanggapan-badge inline-flex text-[11px] font-semibold rounded-full px-2.5 py-1 min-w-[128px] justify-center
+                                {{ $row->status === 'Selesai' ? 'bg-blue-50 text-navy' : 'bg-red-50 text-red-500' }}">
+                                {{ $row->status === 'Selesai' ? 'Sudah Ada Tanggapan' : 'Belum Ada Tanggapan' }}
+                            </span>
                         </td>
 
-                        <td class="px-3 py-5">
-                            <select class="js-update-tanggapan text-xs font-semibold rounded-full px-3 py-1.5 border-0 cursor-pointer
+                        {{-- ===== KETERANGAN: dropdown Selesai / Belum Selesai yang bisa diedit ===== --}}
+                        <td class="border border-slate-200 px-2 py-1.5 whitespace-nowrap">
+                            <select class="js-status-select appearance-none text-[11px] font-semibold rounded-full pl-2.5 pr-6 py-1 border-0 cursor-pointer min-w-[110px] bg-no-repeat bg-[right_0.4rem_center] bg-[length:10px]
                                 {{ $row->status === 'Selesai' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500' }}"
+                                style="background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%2394a3b8%22 stroke-width=%223%22><path d=%22M6 9l6 6 6-6%22/></svg>');"
                                 data-id="{{ $row->id }}" data-field="status">
                                 <option value="Selesai" @selected($row->status === 'Selesai')>Selesai</option>
                                 <option value="Belum Selesai" @selected($row->status !== 'Selesai')>Belum Selesai</option>
                             </select>
                         </td>
 
-                        <td class="px-3 py-5">
-                            <input type="text" class="js-update-keterangan w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-navy/30"
-                                data-id="{{ $row->id }}" value="{{ $row->keterangan }}" placeholder="Tulis keterangan...">
+                        {{-- ===== STATUS PENYELESAIAN: read-only, nampilin status mentah dari Excel ===== --}}
+                        <td class="border border-slate-200 px-2 py-1.5 text-slate-600 max-w-[150px] truncate" title="{{ $row->status_laporan_raw }}">
+                            {{ $row->status_laporan_raw ?? '-' }}
                         </td>
 
-                        <td class="px-3 py-5 text-slate-600">{{ $row->klasifikasi ?? '-' }}</td>
-                        <td class="px-3 py-5 text-slate-500">{{ $row->id_kategori ?? '-' }}</td>
-                        <td class="px-3 py-5 text-slate-600">{{ $row->kategori ?? '-' }}</td>
-                        <td class="px-3 py-5 text-slate-600">{{ $row->judul ?? '-' }}</td>
-                        <td class="px-3 py-5 text-slate-500">
-                            <span title="{{ $row->isi_awal }}">{{ Str::limit($row->isi_awal, 80) }}</span>
-                        </td>
-                        <td class="px-3 py-5 text-slate-500">
-                            <span title="{{ $row->isi_akhir }}">{{ Str::limit($row->isi_akhir, 80) }}</span>
-                        </td>
-                        <td class="px-3 py-5 text-slate-500">{{ $row->tipe_laporan ?? '-' }}</td>
-                        <td class="px-3 py-5 text-slate-500">{{ $row->sumber_laporan ?? '-' }}</td>
-                        <td class="px-3 py-5 text-slate-500">{{ $row->instansi_induk ?? '-' }}</td>
-                        <td class="px-3 py-5 text-slate-500">{{ $row->id_instansi_terdisposisi ?? '-' }}</td>
-                        <td class="px-3 py-5 text-slate-600">{{ $row->skpd ?? '-' }}</td>
-                        <td class="px-3 py-5 text-slate-500">{{ $row->status_laporan_raw ?? '-' }}</td>
-                        <td class="px-3 py-5 text-slate-500">
-                            <span title="{{ $row->alasan_tunda_arsip }}">{{ Str::limit($row->alasan_tunda_arsip, 40) }}</span>
-                        </td>
-                        <td class="px-3 py-5 text-slate-500">{{ $row->provinsi ?? '-' }}</td>
-                        <td class="px-3 py-5 text-slate-500">{{ $row->kabupaten ?? '-' }}</td>
-                        <td class="px-3 py-5 text-slate-500">{{ $row->kecamatan ?? '-' }}</td>
-                        <td class="px-3 py-5 text-slate-500">{{ $row->kelurahan ?? '-' }}</td>
-                        <td class="px-3 py-5 text-slate-500">{{ $row->nomor_sk ?? '-' }}</td>
-                        <td class="px-3 py-5 text-slate-500 whitespace-nowrap">
+                        <td class="border border-slate-200 px-2 py-1.5 text-slate-600 max-w-[130px] truncate" title="{{ $row->klasifikasi }}">{{ $row->klasifikasi ?? '-' }}</td>
+                        <td class="border border-slate-200 px-2 py-1.5 text-slate-500 whitespace-nowrap">{{ $row->id_kategori ?? '-' }}</td>
+                        <td class="border border-slate-200 px-2 py-1.5 text-slate-600 max-w-[130px] truncate" title="{{ $row->kategori }}">{{ $row->kategori ?? '-' }}</td>
+                        <td class="border border-slate-200 px-2 py-1.5 text-slate-600 max-w-[170px] truncate" title="{{ $row->judul }}">{{ $row->judul ?? '-' }}</td>
+                        <td class="border border-slate-200 px-2 py-1.5 text-slate-500 max-w-[180px] truncate" title="{{ $row->isi_awal }}">{{ $row->isi_awal ?? '-' }}</td>
+                        <td class="border border-slate-200 px-2 py-1.5 text-slate-500 max-w-[180px] truncate" title="{{ $row->isi_akhir }}">{{ $row->isi_akhir ?? '-' }}</td>
+                        <td class="border border-slate-200 px-2 py-1.5 text-slate-500 whitespace-nowrap">{{ $row->tipe_laporan ?? '-' }}</td>
+                        <td class="border border-slate-200 px-2 py-1.5 text-slate-500 whitespace-nowrap">{{ $row->sumber_laporan ?? '-' }}</td>
+                        <td class="border border-slate-200 px-2 py-1.5 text-slate-500 max-w-[130px] truncate" title="{{ $row->instansi_induk }}">{{ $row->instansi_induk ?? '-' }}</td>
+                        <td class="border border-slate-200 px-2 py-1.5 text-slate-500 whitespace-nowrap">{{ $row->id_instansi_terdisposisi ?? '-' }}</td>
+                        <td class="border border-slate-200 px-2 py-1.5 text-slate-600 max-w-[150px] truncate" title="{{ $row->skpd }}">{{ $row->skpd ?? '-' }}</td>
+                        <td class="border border-slate-200 px-2 py-1.5 text-slate-500 whitespace-nowrap">{{ $row->status_laporan_raw ?? '-' }}</td>
+                        <td class="border border-slate-200 px-2 py-1.5 text-slate-500 max-w-[130px] truncate" title="{{ $row->alasan_tunda_arsip }}">{{ $row->alasan_tunda_arsip ?? '-' }}</td>
+                        <td class="border border-slate-200 px-2 py-1.5 text-slate-500 whitespace-nowrap">{{ $row->provinsi ?? '-' }}</td>
+                        <td class="border border-slate-200 px-2 py-1.5 text-slate-500 whitespace-nowrap">{{ $row->kabupaten ?? '-' }}</td>
+                        <td class="border border-slate-200 px-2 py-1.5 text-slate-500 whitespace-nowrap">{{ $row->kecamatan ?? '-' }}</td>
+                        <td class="border border-slate-200 px-2 py-1.5 text-slate-500 whitespace-nowrap">{{ $row->kelurahan ?? '-' }}</td>
+                        <td class="border border-slate-200 px-2 py-1.5 text-slate-500 whitespace-nowrap">{{ $row->nomor_sk ?? '-' }}</td>
+                        <td class="border border-slate-200 px-2 py-1.5 text-slate-500 whitespace-nowrap">
                             @if($row->url_sk)
                                 <a href="{{ $row->url_sk }}" target="_blank" rel="noopener" class="text-navy underline">Lihat SK</a>
                             @else
                                 -
                             @endif
                         </td>
-                        <td class="px-3 py-5 text-slate-500 whitespace-nowrap">
+                        <td class="border border-slate-200 px-2 py-1.5 text-slate-500 whitespace-nowrap">
                             @if($row->url_dokumen_laporan_tahunan)
                                 <a href="{{ $row->url_dokumen_laporan_tahunan }}" target="_blank" rel="noopener" class="text-navy underline">Lihat Dokumen</a>
                             @else
                                 -
                             @endif
                         </td>
-                        <td class="px-3 py-5 text-slate-500">{{ $row->laporan_setwapres ?? '-' }}</td>
-                        <td class="px-3 py-5 text-slate-500">{{ $row->rating ?? '-' }}</td>
+                        <td class="border border-slate-200 px-2 py-1.5 text-slate-500 whitespace-nowrap">{{ $row->laporan_setwapres ?? '-' }}</td>
+                        <td class="border border-slate-200 px-2 py-1.5 text-slate-500 whitespace-nowrap">{{ $row->rating ?? '-' }}</td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="30" class="px-6 py-10 text-center text-slate-400">
+                        <td colspan="30" class="border border-slate-200 px-6 py-10 text-center text-slate-400">
                             Belum ada data untuk tahun {{ $tahun }}. Klik "Tambah Pengaduan" buat upload file Excel, atau ganti filter tahun di atas.
                         </td>
                     </tr>
@@ -316,8 +328,6 @@
         </div>
 
         {{-- ================= INFINITE SCROLL SENTINEL ================= --}}
-        {{-- Sentinel ini yang dipantau IntersectionObserver. Begitu kelihatan di viewport
-             (user scroll sampai bawah), script fetch halaman berikutnya otomatis. --}}
         <div id="pengaduan-scroll-sentinel" class="px-6 py-6 flex items-center justify-center">
             <div id="pengaduan-loading-indicator" class="hidden items-center gap-2 text-sm text-slate-400">
                 <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -347,12 +357,10 @@
             </div>
             <p class="text-sm text-slate-500 mb-5">Unggah Excel, Word, dan/atau PDF sekaligus dalam satu proses import.</p>
 
-            {{-- ================= FORM GABUNGAN — SATU SUBMIT UNTUK SEMUA FILE ================= --}}
             <form method="POST" action="{{ route('pengaduan.import') }}" enctype="multipart/form-data"
                   x-data="{ excelName: '', wordName: '', pdfName: '' }">
                 @csrf
 
-                {{-- SLOT EXCEL (wajib, data utama) --}}
                 <div class="mb-4">
                     <p class="text-xs font-bold text-slate-500 mb-2">1. Excel — Data Utama <span class="text-red-500">*wajib</span></p>
                     <label for="file_excel_modal"
@@ -369,7 +377,6 @@
                     </label>
                 </div>
 
-                {{-- SLOT WORD (opsional, tanggapan) --}}
                 <div class="mb-4">
                     <p class="text-xs font-bold text-slate-500 mb-2">2. Word — Tanggapan <span class="text-slate-400">(opsional)</span></p>
                     <label for="file_word_modal"
@@ -386,7 +393,6 @@
                     </label>
                 </div>
 
-                {{-- SLOT PDF (opsional, alternatif Word) --}}
                 <div class="mb-5">
                     <p class="text-xs font-bold text-slate-500 mb-2">3. PDF — Alternatif Word <span class="text-slate-400">(opsional)</span></p>
                     <label for="file_pdf_modal"
@@ -426,7 +432,6 @@
              class="absolute top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl overflow-y-auto
                     transform translate-x-full transition-transform duration-300 ease-out">
 
-            {{-- Header --}}
             <div class="flex items-start justify-between px-6 pt-6 pb-4 sticky top-0 bg-white border-b border-slate-100 z-10">
                 <div>
                     <h3 class="text-lg font-extrabold text-slate-900">Detail Pengaduan</h3>
@@ -438,7 +443,6 @@
             </div>
 
             <div class="px-6 py-5 space-y-5">
-                {{-- Data Pelapor --}}
                 <div>
                     <p class="text-xs font-bold text-slate-400 tracking-wide mb-2">DATA PELAPOR</p>
                     <div class="grid grid-cols-2 gap-3 text-sm">
@@ -453,7 +457,6 @@
                     </div>
                 </div>
 
-                {{-- Isi Aduan --}}
                 <div>
                     <p class="text-xs font-bold text-slate-400 tracking-wide mb-2">ISI ADUAN</p>
                     <p id="detail-judul" class="font-bold text-slate-800 mb-1"></p>
@@ -465,7 +468,6 @@
                     </div>
                 </div>
 
-                {{-- Informasi Tambahan --}}
                 <div>
                     <p class="text-xs font-bold text-slate-400 tracking-wide mb-2">INFORMASI TAMBAHAN</p>
                     <div class="grid grid-cols-2 gap-3 text-sm">
@@ -512,7 +514,6 @@
                     </div>
                 </div>
 
-                {{-- Status & Tindak Lanjut --}}
                 <div>
                     <p class="text-xs font-bold text-slate-400 tracking-wide mb-2">STATUS &amp; TINDAK LANJUT</p>
                     <div class="flex flex-wrap gap-2 mb-3">
@@ -520,7 +521,11 @@
                         <span id="detail-status-badge" class="text-xs font-semibold rounded-full px-3 py-1.5"></span>
                     </div>
                     <div>
-                        <p class="text-xs text-slate-400">Keterangan</p>
+                        <p class="text-xs text-slate-400">Status Laporan (Excel)</p>
+                        <p id="detail-status-laporan-raw" class="text-sm text-slate-600"></p>
+                    </div>
+                    <div class="mt-2">
+                        <p class="text-xs text-slate-400">Keterangan / Catatan</p>
                         <p id="detail-keterangan" class="text-sm text-slate-600"></p>
                     </div>
                     <div id="detail-alasan-wrap" class="mt-2">
@@ -561,51 +566,51 @@
             .catch(() => alert('Gagal menyimpan perubahan, coba lagi.'));
         }
 
+        function updateTanggapanBadge(row, sudahDitanggapi) {
+            const hiddenInput = row.querySelector('.js-tanggapan-value');
+            const badge = row.querySelector('.js-tanggapan-badge');
+            if (hiddenInput) hiddenInput.value = sudahDitanggapi ? '1' : '0';
+            if (badge) {
+                badge.textContent = sudahDitanggapi ? 'Sudah Ada Tanggapan' : 'Belum Ada Tanggapan';
+                badge.classList.remove('bg-blue-50', 'text-navy', 'bg-red-50', 'text-red-500');
+                badge.classList.add(...(sudahDitanggapi ? ['bg-blue-50', 'text-navy'] : ['bg-red-50', 'text-red-500']));
+            }
+            row.dataset.sudahDitanggapi = sudahDitanggapi ? '1' : '0';
+        }
+
         function bindRowEvents(scope) {
-            scope.querySelectorAll('.js-update-tanggapan').forEach(function (select) {
+            // ===== Dropdown Selesai / Belum Selesai (sekarang ada di kolom "Keterangan") =====
+            scope.querySelectorAll('.js-status-select').forEach(function (select) {
                 if (select.dataset.bound) return;
                 select.dataset.bound = '1';
 
                 select.addEventListener('change', function () {
                     const id = this.dataset.id;
-                    const field = this.dataset.field;
                     const row = this.closest('tr');
-                    const keteranganInput = row.querySelector('.js-update-keterangan');
+                    const hiddenTanggapan = row.querySelector('.js-tanggapan-value');
+
+                    // ============ OTOMATIS: Tanggapan selalu ngikut Status.
+                    // Selesai -> Sudah Ada Tanggapan. Belum Selesai -> Belum Ada Tanggapan.
+                    updateTanggapanBadge(row, this.value === 'Selesai');
 
                     const payload = {
-                        sudah_ditanggapi: row.querySelector('[data-field="sudah_ditanggapi"]').value,
-                        status: row.querySelector('[data-field="status"]').value,
-                        keterangan: keteranganInput ? keteranganInput.value : null,
+                        sudah_ditanggapi: hiddenTanggapan ? hiddenTanggapan.value : '0',
+                        status: this.value,
+                        // Catatan bebas (keterangan) lama tetap dipertahankan apa adanya,
+                        // karena input teksnya sudah tidak ada lagi di tabel.
+                        keterangan: (row.dataset.keterangan && row.dataset.keterangan !== '-') ? row.dataset.keterangan : null,
                     };
 
                     kirimUpdate(id, payload, () => {
-                        this.classList.remove('bg-blue-50', 'text-navy', 'bg-red-50', 'text-red-500', 'bg-green-50', 'text-green-600');
-                        if (field === 'sudah_ditanggapi') {
-                            this.classList.add(...(this.value === '1' ? ['bg-blue-50', 'text-navy'] : ['bg-red-50', 'text-red-500']));
-                        } else {
-                            this.classList.add(...(this.value === 'Selesai' ? ['bg-green-50', 'text-green-600'] : ['bg-red-50', 'text-red-500']));
-                        }
+                        this.classList.remove('bg-green-50', 'text-green-600', 'bg-red-50', 'text-red-500');
+                        this.classList.add(...(this.value === 'Selesai' ? ['bg-green-50', 'text-green-600'] : ['bg-red-50', 'text-red-500']));
                     });
                 });
             });
 
-            scope.querySelectorAll('.js-update-keterangan').forEach(function (input) {
-                if (input.dataset.bound) return;
-                input.dataset.bound = '1';
-
-                input.addEventListener('blur', function () {
-                    const id = this.dataset.id;
-                    const row = this.closest('tr');
-
-                    const payload = {
-                        sudah_ditanggapi: row.querySelector('[data-field="sudah_ditanggapi"]').value,
-                        status: row.querySelector('[data-field="status"]').value,
-                        keterangan: this.value,
-                    };
-
-                    kirimUpdate(id, payload);
-                });
-            });
+            // NB: Input teks bebas "js-update-keterangan" sudah tidak ada lagi
+            // di dalam tabel (slotnya sekarang dipakai dropdown status), jadi
+            // listener untuk itu sudah dihapus di sini.
         }
 
         bindRowEvents(document);
@@ -662,6 +667,7 @@
             statusBadge.className = 'text-xs font-semibold rounded-full px-3 py-1.5 ' +
                 (selesai ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500');
 
+            document.getElementById('detail-status-laporan-raw').textContent = (d.statusLaporanRaw && d.statusLaporanRaw.trim() !== '') ? d.statusLaporanRaw : '-';
             document.getElementById('detail-keterangan').textContent = (d.keterangan && d.keterangan.trim() !== '') ? d.keterangan : '-';
 
             const alasanWrap = document.getElementById('detail-alasan-wrap');
