@@ -99,6 +99,19 @@
                     </svg>
                     Kelola Banner
                 </a>
+
+                {{-- ===== BARU: Manajemen Pengguna =====
+                     Kalau mau dibatasi cuma buat Master Admin, bungkus <a> ini dengan:
+                     @if(auth()->user()->peran === 'master_admin')  ...  @endif
+                --}}
+                <a href="{{ route('manajemen-pengguna.index') }}"
+                   class="nav-item {{ request()->routeIs('manajemen-pengguna.*') ? 'active' : '' }} flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('manajemen-pengguna.*') ? '' : 'text-blue-100/90' }} font-medium">
+                    <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m5-4a4 4 0 100-8 4 4 0 000 8zm6 4a4 4 0 10-8 0"/>
+                    </svg>
+                    Manajemen Pengguna
+                </a>
+
                 <a href="{{ route('profil') }}"
                    class="nav-item {{ request()->routeIs('profil') ? 'active' : '' }} flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('profil') ? '' : 'text-blue-100/90' }} font-medium">
                     <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
