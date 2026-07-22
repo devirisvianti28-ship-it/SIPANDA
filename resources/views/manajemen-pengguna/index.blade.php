@@ -69,26 +69,36 @@
 
     {{-- Table --}}
     <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <table class="w-full text-sm">
+        <table class="w-full text-sm table-fixed">
+            <colgroup>
+                <col class="w-[14%]">
+                <col class="w-[10%]">
+                <col class="w-[17%]">
+                <col class="w-[10%]">
+                <col class="w-[9%]">
+                <col class="w-[13%]">
+                <col class="w-[10%]">
+                <col class="w-[9%]">
+            </colgroup>
             <thead>
                 <tr class="text-left text-[11px] uppercase tracking-wide text-gray-400 bg-gray-50">
-                    <th class="px-6 py-3.5 font-semibold">Nama</th>
-                    <th class="px-6 py-3.5 font-semibold">NIP</th>
-                    <th class="px-6 py-3.5 font-semibold">Email</th>
-                    <th class="px-6 py-3.5 font-semibold">Role</th>
-                    <th class="px-6 py-3.5 font-semibold">Status</th>
-                    <th class="px-6 py-3.5 font-semibold">Terakhir Login</th>
-                    <th class="px-6 py-3.5 font-semibold">Dibuat</th>
-                    <th class="px-6 py-3.5 font-semibold text-right">Aksi</th>
+                    <th class="px-3 py-3 font-semibold">Nama</th>
+                    <th class="px-3 py-3 font-semibold">NIP</th>
+                    <th class="px-3 py-3 font-semibold">Email</th>
+                    <th class="px-3 py-3 font-semibold">Role</th>
+                    <th class="px-3 py-3 font-semibold">Status</th>
+                    <th class="px-3 py-3 font-semibold">Terakhir Login</th>
+                    <th class="px-3 py-3 font-semibold">Dibuat</th>
+                    <th class="px-3 py-3 font-semibold text-right">Aksi</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
                 @forelse($users as $user)
-                <tr class="hover:bg-gray-50/60 align-top">
-                    <td class="px-6 py-4 font-semibold text-gray-900">{{ $user->name }}</td>
-                    <td class="px-6 py-4 text-gray-500">{{ $user->nip ?? '-' }}</td>
-                    <td class="px-6 py-4 text-gray-500">{{ $user->email }}</td>
-                    <td class="px-6 py-4">
+                <tr class="hover:bg-gray-50/60 align-top group">
+                    <td class="px-3 py-3 font-semibold text-gray-900 break-words">{{ $user->name }}</td>
+                    <td class="px-3 py-3 text-gray-500 break-words">{{ $user->nip ?? '-' }}</td>
+                    <td class="px-3 py-3 text-gray-500 break-words">{{ $user->email ?? '-' }}</td>
+                    <td class="px-3 py-3">
                         @php
                             $roleLabel = ['master_admin' => 'Master Admin', 'pengelola' => 'Pengelola', 'kepala_dinas' => 'Kepala Dinas'][$user->peran] ?? $user->peran;
                             $roleClass = match($user->peran) {
@@ -98,22 +108,22 @@
                                 default        => 'bg-gray-100 text-gray-700',
                             };
                         @endphp
-                        <span class="px-2.5 py-1 rounded-full text-xs font-semibold {{ $roleClass }}">{{ $roleLabel }}</span>
+                        <span class="px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap {{ $roleClass }}">{{ $roleLabel }}</span>
                     </td>
-                    <td class="px-6 py-4">
+                    <td class="px-3 py-3">
                         @php
                             $statusClass = $user->status == 'aktif' ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400';
                         @endphp
-                        <span class="px-2.5 py-1 rounded-full text-xs font-semibold {{ $statusClass }}">{{ ucfirst($user->status) }}</span>
+                        <span class="px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap {{ $statusClass }}">{{ ucfirst($user->status) }}</span>
                     </td>
-                    <td class="px-6 py-4 text-gray-500">
+                    <td class="px-3 py-3 text-gray-500 break-words">
                         {{ optional($user->last_login_at)->diffForHumans() ?? '-' }}
                     </td>
-                    <td class="px-6 py-4 text-gray-500">
+                    <td class="px-3 py-3 text-gray-500 break-words">
                         {{ optional($user->created_at)->format('d M Y') ?? '-' }}
                     </td>
-                    <td class="px-6 py-4">
-                        <div class="flex items-center justify-end gap-3">
+                    <td class="px-3 py-3">
+                        <div class="flex items-center justify-end gap-2">
                             <button type="button" @click='openEdit(@json($user))'
                                 class="text-gray-400 hover:text-blue-600" title="Edit">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.4-9.4a2 2 0 112.8 2.8L11 15l-4 1 1-4 9.6-9.6z"/></svg>
@@ -127,7 +137,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="8" class="px-6 py-12 text-center text-gray-400">Belum ada data pengguna.</td>
+                    <td colspan="8" class="px-3 py-12 text-center text-gray-400">Belum ada data pengguna.</td>
                 </tr>
                 @endforelse
             </tbody>

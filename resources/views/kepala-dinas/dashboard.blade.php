@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.app-kepala-dinas')
 
 @section('title', 'Dashboard Monitoring Pengaduan')
 
@@ -67,11 +67,11 @@
                 </div>
                 {{-- ============ TOGGLE TAHUN INI / TAHUN LALU ============ --}}
                 <div class="flex bg-slate-100 rounded-full p-1 text-xs font-semibold">
-                    <a href="{{ route('dashboard', ['tahun' => now()->year]) }}"
+                    <a href="{{ route('kepala-dinas.dashboard', ['tahun' => now()->year]) }}"
                        class="px-3 py-1.5 rounded-full transition {{ $tahunAktif === now()->year ? 'bg-navy text-white' : 'text-slate-500 hover:text-navy' }}">
                         Tahun Ini
                     </a>
-                    <a href="{{ route('dashboard', ['tahun' => now()->year - 1]) }}"
+                    <a href="{{ route('kepala-dinas.dashboard', ['tahun' => now()->year - 1]) }}"
                        class="px-3 py-1.5 rounded-full transition {{ $tahunAktif === (now()->year - 1) ? 'bg-navy text-white' : 'text-slate-500 hover:text-navy' }}">
                         Tahun Lalu
                     </a>

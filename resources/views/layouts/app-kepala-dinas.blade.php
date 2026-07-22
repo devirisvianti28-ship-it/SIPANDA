@@ -113,8 +113,8 @@
             </button>
 
             <nav class="flex-1 mt-2 px-3 space-y-1">
-                <a href="{{ route('dashboard') }}"
-                   class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }} flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('dashboard') ? '' : 'text-blue-100/90' }} font-medium"
+                <a href="{{ route('kepala-dinas.dashboard') }}"
+                   class="nav-item {{ request()->routeIs('kepala-dinas.dashboard') ? 'active' : '' }} flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('kepala-dinas.dashboard') ? '' : 'text-blue-100/90' }} font-medium"
                    :class="sidebarCollapsed && 'md:justify-center'"
                    title="Dashboard">
                     <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -187,29 +187,8 @@
                 </div>
                 {{-- ===== END MENU LAPORAN ===== --}}
 
-                <a href="{{ route('kelola-banner') }}"
-                   class="nav-item {{ request()->routeIs('kelola-banner*') ? 'active' : '' }} flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('kelola-banner*') ? '' : 'text-blue-100/90' }} font-medium"
-                   :class="sidebarCollapsed && 'md:justify-center'"
-                   title="Kelola Banner">
-                    <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M8 5v4"/>
-                    </svg>
-                    <span class="nav-label" x-show="!sidebarCollapsed" x-cloak>Kelola Banner</span>
-                </a>
-
-                {{-- ===== Manajemen Pengguna =====
-                     Kalau mau dibatasi cuma buat Master Admin, bungkus <a> ini dengan:
-                     @if(auth()->user()->peran === 'master_admin')  ...  @endif
-                --}}
-                <a href="{{ route('manajemen-pengguna.index') }}"
-                   class="nav-item {{ request()->routeIs('manajemen-pengguna.*') ? 'active' : '' }} flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('manajemen-pengguna.*') ? '' : 'text-blue-100/90' }} font-medium"
-                   :class="sidebarCollapsed && 'md:justify-center'"
-                   title="Manajemen Pengguna">
-                    <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m5-4a4 4 0 100-8 4 4 0 000 8zm6 4a4 4 0 10-8 0"/>
-                    </svg>
-                    <span class="nav-label" x-show="!sidebarCollapsed" x-cloak>Manajemen Pengguna</span>
-                </a>
+                {{-- Catatan: Menu "Kelola Banner" & "Manajemen Pengguna" SENGAJA
+                     tidak ditampilkan di layout Kepala Dinas ini. --}}
 
                 <a href="{{ route('profil') }}"
                    class="nav-item {{ request()->routeIs('profil') ? 'active' : '' }} flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('profil') ? '' : 'text-blue-100/90' }} font-medium"
@@ -246,14 +225,6 @@
              class="flex-1 ml-0 min-w-0">
 
             {{-- TOP BAR --}}
-<<<<<<< HEAD
-            <header class="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between sticky top-0 z-20">
-                <div class="relative w-full max-w-md">
-                </div>
-
-                <div class="flex items-center gap-5 ml-6">
-                    <a href="{{ route('profil') }}" class="text-navy">
-=======
             <header class="bg-white border-b border-slate-200 px-4 md:px-8 py-4 flex items-center justify-between sticky top-0 z-20">
                 <div class="flex items-center gap-3 w-full">
                     {{-- Tombol Hamburger (mobile) --}}
@@ -290,13 +261,12 @@
                             <circle cx="12" cy="12" r="3"/>
                             <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
                         </svg>
->>>>>>> 6a6cb70 (feat: implement kepala dinas dashboard and middleware)
                     </a>
 
                     <a href="{{ route('profil') }}" class="flex items-center gap-3">
                         <div class="text-right leading-tight hidden sm:block">
                             <p class="text-sm font-semibold text-slate-800">{{ auth()->user()->nama_lengkap ?? auth()->user()->name }}</p>
-                            <p class="text-xs text-slate-400">{{ auth()->user()->peran ?? 'Pengguna' }}</p>
+                            <p class="text-xs text-slate-400">{{ auth()->user()->peran ?? 'Kepala Dinas' }}</p>
                         </div>
                         @if(auth()->user()->foto_profil ?? false)
                             <img src="{{ asset('storage/'.auth()->user()->foto_profil) }}"

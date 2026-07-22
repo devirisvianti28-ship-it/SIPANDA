@@ -50,4 +50,31 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Relasi banyak-ke-banyak ke tabel roles lewat pivot role_user.
+     * Satu user sekarang bisa punya lebih dari 1 role (misal Master Admin + Pengelola).
+     */
+    public function roles()
+    {
+        return $this->belongsToMany(\App\Models\Role::class);
+    }
+
+    /**
+     * Cek apakah user punya SATU role tertentu.
+     * Contoh: $user->hasRole('kepala_dinas')
+     */
+    public function hasRole(string $roleName): bool
+    {
+        return $this->roles->contains('name', $roleName);
+    }
+
+    /**
+     * Cek apakah user punya SALAH SATU dari beberapa role.
+     * Dipakai oleh middleware role:role1,role2,dst
+     */
+    public function hasAnyRole(array $roleNames): bool
+    {
+        return $this->roles->pluck('name')->intersect($roleNames)->isNotEmpty();
+    }
 }

@@ -161,4 +161,74 @@ class LaporanController extends Controller
             'activeTab'
         ));
     }
+
+    /**
+     * Tampilkan halaman "Arsip Laporan".
+     * Data di bawah ini contoh statis — nanti ganti dengan query dari database, misalnya:
+     * $laporans = Laporan::with('skpd')->latest()->paginate(10);
+     */
+    public function pengaduan(Request $request)
+    {
+        $laporans = collect([
+            [
+                'nama'      => 'Laporan Bulanan — Juli 2026',
+                'skpd'      => 'Seluruh SKPD',
+                'jenis'     => 'Bulanan',
+                'periode'   => 'Juli 2026',
+                'dibuat'    => '15 Jul 2026',
+                'format'    => 'PDF',
+                'ukuran'    => '380 KB',
+                'url_lihat' => '#',
+                'url_unduh' => '#',
+            ],
+            [
+                'nama'      => 'Laporan Mingguan — Juni 2026',
+                'skpd'      => 'Dinas Pekerjaan Umum',
+                'jenis'     => 'Mingguan',
+                'periode'   => 'Juni 2026',
+                'dibuat'    => '14 Jul 2026',
+                'format'    => 'PDF',
+                'ukuran'    => '1.8 MB',
+                'url_lihat' => '#',
+                'url_unduh' => '#',
+            ],
+            [
+                'nama'      => 'Laporan Bulanan — Juli 2026',
+                'skpd'      => 'Seluruh SKPD',
+                'jenis'     => 'Bulanan',
+                'periode'   => 'Juli 2026',
+                'dibuat'    => '15 Jul 2026',
+                'format'    => 'PDF',
+                'ukuran'    => '380 KB',
+                'url_lihat' => '#',
+                'url_unduh' => '#',
+            ],
+            [
+                'nama'      => 'Laporan Mingguan — Juni 2026',
+                'skpd'      => 'Dinas Pekerjaan Umum',
+                'jenis'     => 'Mingguan',
+                'periode'   => 'Juni 2026',
+                'dibuat'    => '14 Jul 2026',
+                'format'    => 'PDF',
+                'ukuran'    => '1.8 MB',
+                'url_lihat' => '#',
+                'url_unduh' => '#',
+            ],
+            [
+                'nama'      => 'Laporan Bulanan — Juli 2026',
+                'skpd'      => 'Seluruh SKPD',
+                'jenis'     => 'Bulanan',
+                'periode'   => 'Juli 2026',
+                'dibuat'    => '15 Jul 2026',
+                'format'    => 'PDF',
+                'ukuran'    => '380 KB',
+                'url_lihat' => '#',
+                'url_unduh' => '#',
+            ],
+        ]);
+
+        $totalArsip = 1284; // Ganti dengan Laporan::count() kalau sudah pakai database
+
+        return view('laporan.pengaduan', compact('laporans', 'totalArsip'));
+    }
 }

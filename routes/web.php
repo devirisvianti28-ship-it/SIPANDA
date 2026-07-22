@@ -20,7 +20,6 @@ use App\Http\Controllers\UserController;
 */
 
 // ---------- Root ----------
-// Kalau belum login, arahkan ke halaman login.
 Route::get('/', [LoginController::class, 'showLoginForm']);
 
 // ---------- Auth ----------
@@ -46,6 +45,7 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan');
+Route::get('/laporan/pengaduan', [LaporanController::class, 'pengaduan'])->name('laporan.pengaduan'); // <-- BARU
 
 // ---------- Kelola Banner ----------
 Route::get('/kelola-banner', [BannerController::class, 'index'])->name('kelola-banner');
@@ -55,13 +55,9 @@ Route::patch('/kelola-banner/{banner}/set-utama', [BannerController::class, 'set
 Route::patch('/kelola-banner/{banner}/urutan', [BannerController::class, 'updateUrutan'])->name('kelola-banner.urutan');
 Route::delete('/kelola-banner/{banner}', [BannerController::class, 'destroy'])->name('kelola-banner.destroy');
 
-// Route gabungan (dipakai modal import yang baru): satu submit untuk
-// Excel (wajib) + Word (opsional) + PDF (opsional) sekaligus.
 Route::post('/pengaduan/import', [PengaduanImportController::class, 'import'])
     ->name('pengaduan.import');
 
-// Route lama per-jenis file — boleh tetap dibiarkan kalau masih dipakai di tempat lain,
-// atau dihapus kalau sudah tidak ada yang manggil.
 Route::post('/pengaduan/import/excel', [PengaduanImportController::class, 'importExcel'])
     ->name('pengaduan.import.excel');
 
@@ -88,5 +84,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::delete('/manajemen-pengguna/{user}', [UserController::class, 'destroy'])
         ->name('manajemen-pengguna.destroy');
+    
+    Route::get('/kepala-dinas/dashboard', [KepalaDinasController::class, 'dashboard'])
+    ->name('kepala-dinas.dashboard');
 
 });
