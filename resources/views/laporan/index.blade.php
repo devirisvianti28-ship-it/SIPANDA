@@ -8,6 +8,12 @@
         activeSection: '{{ $activeTab ?? 'ringkasan' }}',
         charts: {},
 
+        // Isi manual rekomendasi & tindak lanjut. SEKARANG bentuknya 1 string
+        // bebas (bukan object 4 poin lagi) — tiap baris (Enter) = 1 poin,
+        // jumlahnya bebas. Ini yang dikirim ke Word lewat form 'Generate
+        // Report' di bawah — BUKAN auto-generate dari data lagi.
+        rekomendasi: '',
+
         harian: {
             tanggal: '{{ request('harian_tanggal', now()->format('Y-m-d')) }}',
             skpd: '{{ request('harian_skpd', 'Semua Instansi / SKPD') }}',
@@ -84,14 +90,12 @@
             const validSections = ['ringkasan', 'visualisasi', 'rekap', 'rekomendasi'];
             const hash = window.location.hash.replace('#', '');
 
-            // render semua chart sekali di awal (nggak digate per-tab lagi karena semua section kelihatan)
             this.$nextTick(() => this.renderCharts());
 
             if (validSections.includes(hash)) {
                 this.$nextTick(() => setTimeout(() => this.scrollToSection(hash, false), 50));
             }
 
-            // scroll-spy: highlight nav sesuai section yang lagi kelihatan di layar
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
@@ -109,7 +113,8 @@
         renderCharts() {
             if (this.charts.tren) return;
 
-            // ---- Tren Pengaduan Bulanan (area chart, gradient halus) ----
+            const dataGrafik = {{ \Illuminate\Support\Js::from($dataGrafik) }};
+
             const trenCtx = document.getElementById('trenChart').getContext('2d');
             const gradMasuk = trenCtx.createLinearGradient(0, 0, 0, 220);
             gradMasuk.addColorStop(0, 'rgba(11,61,145,0.25)');
@@ -118,11 +123,11 @@
             this.charts.tren = new Chart(trenCtx, {
                 type: 'line',
                 data: {
-                    labels: ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'],
+                    labels: dataGrafik.bulan_label,
                     datasets: [
                         {
                             label: 'Masuk',
-                            data: [40, 55, 70, 90, 120, 150, 130, 110, 95, 80, 70, 60],
+                            data: dataGrafik.tren_masuk,
                             borderColor: '#0B3D91',
                             backgroundColor: gradMasuk,
                             fill: true,
@@ -132,7 +137,7 @@
                         },
                         {
                             label: 'Selesai',
-                            data: [30, 45, 60, 75, 100, 130, 115, 95, 80, 68, 60, 50],
+                            data: dataGrafik.tren_selesai,
                             borderColor: '#10B981',
                             backgroundColor: 'transparent',
                             borderDash: [4, 4],
@@ -144,6 +149,8 @@
                     ]
                 },
                 options: {
+                    maintainAspectRatio: false,
+                    animation: false,
                     plugins: { legend: { display: false } },
                     scales: {
                         y: { display: false, grid: { display: false } },
@@ -170,66 +177,116 @@
                 }
             };
 
-            // ---- Aduan per SKPD (Top 5) — bar chart ----
+            const wrapLabel = (text, maxCharsPerLine = 14) => {
+                const words = String(text).split(' ');
+                const lines = [];
+                let current = '';
+                words.forEach((word) => {
+                    const candidate = current ? current + ' ' + word : word;
+                    if (candidate.length > maxCharsPerLine && current) {
+                        lines.push(current);
+                        current = word;
+                    } else {
+                        current = candidate;
+                    }
+                });
+                if (current) lines.push(current);
+                return lines;
+            };
+
             new Chart(document.getElementById('skpdBarChart'), {
                 type: 'bar',
                 data: {
-                    labels: ['PU', 'Pendidikan', 'Kesehatan', 'Dishub', 'Satpol PP'],
+                    labels: dataGrafik.skpd_labels.map((l) => wrapLabel(l)),
                     datasets: [{
-                        data: [450, 380, 310, 260, 190],
+                        data: dataGrafik.skpd_data,
                         backgroundColor: ['#0B3D91', '#2563EB', '#3B82F6', '#60A5FA', '#93C5FD'],
                         borderRadius: 6,
                         maxBarThickness: 34,
                     }]
                 },
                 options: {
+                    maintainAspectRatio: false,
+                    animation: false,
                     plugins: { legend: { display: false } },
                     layout: { padding: { top: 20 } },
                     scales: {
                         y: { display: false, grid: { display: false } },
-                        x: { grid: { display: false }, ticks: { color: '#94A3B8', font: { size: 10, weight: '600' } } }
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                color: '#94A3B8',
+                                font: { size: 10, weight: '600' },
+                                maxRotation: 0,
+                                minRotation: 0,
+                                autoSkip: false,
+                            }
+                        }
                     }
                 },
                 plugins: [barValueLabels]
             });
 
-            // ---- Distribusi Status (donut) ----
             new Chart(document.getElementById('statusDonut'), {
                 type: 'doughnut',
                 data: {
+                    labels: dataGrafik.status_labels,
                     datasets: [{
-                        data: [82, 13, 5],
-                        backgroundColor: ['#10B981', '#FBBF24', '#EF4444'],
+                        data: dataGrafik.status_data,
+                        backgroundColor: ['#10B981', '#EF4444'],
                         borderWidth: 0,
                     }]
                 },
                 options: {
+                    maintainAspectRatio: false,
+                    animation: false,
                     cutout: '72%',
                     plugins: { legend: { display: false }, tooltip: { enabled: false } }
                 }
             });
 
-            // ---- Kategori Pengaduan Terbanyak — bar chart ----
             new Chart(document.getElementById('kategoriBarChart'), {
                 type: 'bar',
                 data: {
-                    labels: ['Infrastruktur', 'Kesehatan', 'Pendidikan', 'Lingkungan', 'Lainnya'],
+                    labels: dataGrafik.kategori_labels,
                     datasets: [{
-                        data: [425, 312, 248, 165, 104],
-                        backgroundColor: ['#0B3D91', '#2563EB', '#3B82F6', '#60A5FA', '#BFDBFE'],
-                        borderRadius: 6,
-                        maxBarThickness: 60,
+                        data: dataGrafik.kategori_data,
+                        backgroundColor: '#2563EB',
+                        borderRadius: 4,
                     }]
                 },
                 options: {
-                    plugins: { legend: { display: false } },
-                    layout: { padding: { top: 20 } },
+                    indexAxis: 'y',
+                    maintainAspectRatio: false,
+                    animation: false,
+                    barPercentage: 0.8,
+                    categoryPercentage: 0.8,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    },
+                    layout: { padding: { right: 34 } },
                     scales: {
-                        y: { display: false, grid: { display: false } },
-                        x: { grid: { display: false }, ticks: { color: '#94A3B8', font: { size: 10, weight: '600' } } }
+                        x: { display: false, grid: { display: false } },
+                        y: { grid: { display: false }, ticks: { color: '#334155', font: { size: 11 } } }
                     }
                 },
-                plugins: [barValueLabels]
+                plugins: [{
+                    id: 'barValueLabelsH',
+                    afterDatasetsDraw(chart) {
+                        const { ctx } = chart;
+                        chart.getDatasetMeta(0).data.forEach((bar, i) => {
+                            const value = chart.data.datasets[0].data[i];
+                            ctx.save();
+                            ctx.fillStyle = '#0B3D91';
+                            ctx.font = 'bold 11px sans-serif';
+                            ctx.textAlign = 'left';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(value, bar.x + 6, bar.y);
+                            ctx.restore();
+                        });
+                    }
+                }]
             });
         }
     }"
@@ -304,9 +361,8 @@
         </div>
     </div>
 
-    {{-- ============ STEP 2: FILTER DATA — 1 baris, sesuai jenis laporan ============ --}}
+    {{-- ============ STEP 2: FILTER DATA ============ --}}
     <form method="GET" action="{{ url()->current() }}" class="bg-white rounded-2xl card-shadow p-6 mb-6">
-        {{-- jenis laporan & tab yang lagi aktif ikut dikirim, biar konsisten setelah submit --}}
         <input type="hidden" name="jenis" :value="jenis">
         <input type="hidden" name="tab" :value="activeSection">
 
@@ -498,7 +554,7 @@
         </div>
     </form>
 
-    {{-- ============ NAV SECTION (sticky, klik = scroll ke bagian terkait) ============ --}}
+    {{-- ============ NAV SECTION ============ --}}
     <div class="border-b border-slate-200 mb-6 sticky top-0 z-20 bg-slate-50/95 backdrop-blur">
         <nav class="flex gap-6 text-sm font-medium">
             @php
@@ -519,10 +575,8 @@
         </nav>
     </div>
 
-    {{-- ============ TAB: RINGKASAN (cuma stat cards) ============ --}}
+    {{-- ============ TAB: RINGKASAN ============ --}}
     <section id="section-ringkasan" class="space-y-6 scroll-mt-24">
-
-        {{-- Stat cards ringkas --}}
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div class="bg-white rounded-2xl card-shadow p-5">
                 <div class="flex items-center justify-between mb-4">
@@ -533,8 +587,8 @@
                         </svg>
                     </div>
                 </div>
-                <p class="text-2xl font-extrabold text-slate-900">1.284</p>
-                <p class="text-xs text-slate-400 mt-1">Periode Jul 2026</p>
+                <p class="text-2xl font-extrabold text-slate-900">{{ number_format($rekap['total_pengaduan'] ?? 0, 0, ',', '.') }}</p>
+                <p class="text-xs text-slate-400 mt-1">Periode {{ $periodeLabel ?? '-' }}</p>
             </div>
 
             <div class="bg-white rounded-2xl card-shadow p-5">
@@ -546,55 +600,54 @@
                         </svg>
                     </div>
                 </div>
-                <p class="text-2xl font-extrabold text-slate-900">942</p>
-                <p class="text-xs text-emerald-500 mt-1 font-semibold">73% dari total</p>
+                <p class="text-2xl font-extrabold text-slate-900">{{ number_format($rekap['selesai'] ?? 0, 0, ',', '.') }}</p>
+                <p class="text-xs text-emerald-500 mt-1 font-semibold">{{ $rekap['persentase'] ?? 0 }}% dari total</p>
             </div>
 
             <div class="bg-white rounded-2xl card-shadow p-5">
                 <div class="flex items-center justify-between mb-4">
-                    <span class="text-sm text-slate-500">Ada tanggapan</span>
+                    <span class="text-sm text-slate-500">Belum Selesai</span>
                     <div class="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center">
                         <svg class="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path d="M12 9v4m0 4h.01M10.29 3.86l-8.13 14A2 2 0 004 21h16a2 2 0 001.84-3.14l-8.13-14a2 2 0 00-3.42 0z"/>
                         </svg>
                     </div>
                 </div>
-                <p class="text-2xl font-extrabold text-slate-900">74</p>
-                <p class="text-xs text-red-500 mt-1 font-semibold">6% dari total</p>
+                <p class="text-2xl font-extrabold text-slate-900">{{ number_format(($rekap['total_pengaduan'] ?? 0) - ($rekap['selesai'] ?? 0), 0, ',', '.') }}</p>
+                <p class="text-xs text-red-500 mt-1 font-semibold">{{ 100 - ($rekap['persentase'] ?? 0) }}% dari total</p>
             </div>
         </div>
     </section>
 
-    {{-- ============ TAB: VISUALISASI (semua chart pindah ke sini) ============ --}}
+    {{-- ============ TAB: VISUALISASI ============ --}}
     <section id="section-visualisasi" class="space-y-6 scroll-mt-24 mt-6">
-
-        {{-- Tren Pengaduan Bulanan --}}
         <div class="bg-white rounded-2xl card-shadow p-6">
             <div class="flex items-center justify-between mb-1">
                 <div>
                     <h3 class="font-bold text-slate-800">Tren Pengaduan Bulanan</h3>
-                    <p class="text-xs text-slate-400">Visualisasi volume pengaduan yang masuk sepanjang tahun 2026</p>
+                    <p class="text-xs text-slate-400">Visualisasi volume pengaduan yang masuk, periode {{ $periodeLabel ?? '-' }}</p>
                 </div>
                 <div class="flex items-center gap-3 text-xs text-slate-500">
                     <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-navy"></span> Masuk</span>
                     <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Selesai</span>
                 </div>
             </div>
-            <div class="mt-4">
-                <canvas id="trenChart" height="70"></canvas>
+            <div class="mt-4" style="height: 220px;">
+                <canvas id="trenChart"></canvas>
             </div>
         </div>
 
-        {{-- Aduan per SKPD (bar chart) + Distribusi Status --}}
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-white rounded-2xl card-shadow p-6">
                 <div class="flex items-center justify-between mb-4">
                     <div>
                         <h3 class="font-bold text-slate-800">Aduan per SKPD (Top 5)</h3>
-                        <p class="text-xs text-slate-400">Volume pengaduan tertinggi, Jul 2026</p>
+                        <p class="text-xs text-slate-400">Volume pengaduan tertinggi, {{ $periodeLabel ?? '-' }}</p>
                     </div>
                 </div>
-                <canvas id="skpdBarChart" height="180"></canvas>
+                <div style="height: 260px;">
+                    <canvas id="skpdBarChart"></canvas>
+                </div>
             </div>
 
             <div class="bg-white rounded-2xl card-shadow p-6">
@@ -603,47 +656,36 @@
                     <div class="relative w-32 h-32 shrink-0">
                         <canvas id="statusDonut"></canvas>
                         <div class="absolute inset-0 flex flex-col items-center justify-center">
-                            <span class="text-xl font-extrabold text-slate-800">1.4K</span>
+                            <span class="text-xl font-extrabold text-slate-800">{{ number_format($dataGrafik['status_total'] ?? 0, 0, ',', '.') }}</span>
                             <span class="text-[10px] text-slate-400 font-semibold tracking-wide">TOTAL</span>
                         </div>
                     </div>
                     <div class="space-y-2 text-sm">
-                        <p class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Selesai (82%)</p>
-                        <p class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> Belum Ada Tanggapan (13%)</p>
-                        <p class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> Belum Ditindaklanjuti (5%)</p>
+                        @php
+                            $warnaStatus = ['bg-emerald-500', 'bg-red-500'];
+                        @endphp
+                        @forelse(($dataGrafik['status_labels'] ?? []) as $i => $label)
+                            <p class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full {{ $warnaStatus[$i] ?? 'bg-slate-400' }}"></span>
+                                {{ $label }} ({{ $dataGrafik['status_persen'][$i] ?? 0 }}%)
+                            </p>
+                        @empty
+                            <p class="text-slate-400">Belum ada data untuk periode ini.</p>
+                        @endforelse
                     </div>
                 </div>
             </div>
         </div>
 
-        {{-- Kategori Pengaduan Terbanyak (bar chart, full width) --}}
         <div class="bg-white rounded-2xl card-shadow p-6">
             <h3 class="font-bold text-slate-800 mb-4">Kategori Pengaduan Terbanyak</h3>
-            <canvas id="kategoriBarChart" height="90"></canvas>
+            <div style="height: {{ max(200, count($dataGrafik['kategori_labels'] ?? []) * 36) }}px;">
+                <canvas id="kategoriBarChart"></canvas>
+            </div>
         </div>
     </section>
 
     {{-- ============ TAB: DATA REKAP ============ --}}
-    {{--
-        Tabel ini sekarang memakai struktur kolom yang sama persis dengan
-        tabel "Daftar Pengaduan" di data-pengaduan.blade.php, tapi versi
-        read-only (untuk laporan, bukan untuk edit data).
-
-        ASUMSI: controller laporan mengirim variabel $rekapData berupa
-        collection/paginator hasil query pengaduan sesuai filter laporan
-        yang aktif (harian/mingguan/bulanan/tahunan), dengan field yang
-        sama seperti model pengaduan di halaman Data Pengaduan
-        (tracking_id, tanggal, waktu, pelapor, status, keterangan,
-        klasifikasi, id_kategori, kategori, judul, isi_awal, isi_akhir,
-        tipe_laporan, sumber_laporan, instansi_induk,
-        id_instansi_terdisposisi, skpd, status_laporan_raw,
-        alasan_tunda_arsip, provinsi, kabupaten, kecamatan, kelurahan,
-        nomor_sk, url_sk, url_dokumen_laporan_tahunan,
-        laporan_setwapres, rating).
-
-        Kalau nama variabelnya beda di controller kamu, tinggal ganti
-        $rekapData di @forelse dan @php count di bawah.
-    --}}
     <section id="section-rekap" class="space-y-6 scroll-mt-24 mt-6">
         <div class="bg-white rounded-2xl card-shadow overflow-hidden">
             <div class="flex items-center justify-between px-6 py-5">
@@ -772,38 +814,62 @@
         </div>
     </section>
 
-    {{-- ============ TAB: REKOMENDASI ============ --}}
+    {{-- ============ TAB: REKOMENDASI (SEKARANG 1 TEXTAREA BEBAS) ============ --}}
     <section id="section-rekomendasi" class="space-y-6 scroll-mt-24 mt-6">
         <div class="bg-white rounded-2xl card-shadow p-6">
-            <h3 class="font-bold text-slate-800 mb-3">Rekomendasi & Tindak Lanjut</h3>
-            <div class="border border-slate-200 rounded-xl overflow-hidden">
-                <div class="flex items-center gap-3 px-3 py-2 border-b border-slate-200 bg-slate-50 text-slate-500">
-                    <button type="button" class="font-bold text-sm hover:text-navy">B</button>
-                    <button type="button" class="italic text-sm hover:text-navy">I</button>
-                    <span class="w-px h-4 bg-slate-200"></span>
-                    <button type="button" class="hover:text-navy">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
-                    </button>
-                    <button type="button" class="hover:text-navy">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 6h1M7 6h13M4 12h1M7 12h13M4 18h1M7 18h13"/></svg>
-                    </button>
-                    <button type="button" class="hover:text-navy">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M13.5 6.5l4 4L9 19H5v-4z"/></svg>
-                    </button>
-                </div>
-                <textarea rows="5" class="w-full px-4 py-3 text-sm text-slate-700 focus:outline-none resize-none"
-                    placeholder="Tulis rekomendasi dan tindak lanjut di sini...">1. Diperlukan koordinasi lintas sektor antara PUPR dan DLH untuk penanganan banjir di area Garut Kota.
-2. Penambahan tim lapangan pada akhir pekan untuk merespon aduan darurat infrastruktur.
-3. Melakukan sosialisasi penggunaan aplikasi SAPA untuk aduan kesehatan masyarakat.</textarea>
-            </div>
-            <div class="flex justify-end mt-4">
-                <button type="button" class="flex items-center gap-2 bg-navy text-white text-sm font-semibold rounded-lg px-5 py-2.5 hover:bg-navy-dark">
+            <h3 class="font-bold text-slate-800 mb-1">Rekomendasi & Tindak Lanjut</h3>
+            <p class="text-sm text-slate-400 mb-3">
+                Isi manual — tulis satu poin per baris (tekan Enter untuk poin baru). Jumlah poin bebas,
+                akan otomatis dinomori di dokumen Word saat "Generate Report".
+            </p>
+
+            <textarea rows="6"
+                class="w-full border border-slate-200 rounded-xl p-4 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-navy/30 resize-y"
+                placeholder="Contoh:&#10;Tingkatkan koordinasi dengan SKPD terkait penanganan aduan infrastruktur jalan.&#10;Percepat proses disposisi laporan yang masih berstatus Diarsipkan.&#10;..."
+                x-model="rekomendasi"></textarea>
+
+            {{--
+                =====================================================================
+                Tombol "Generate Report" -> GET ke laporan.generate, bawa SEMUA
+                filter aktif (jenis + isian harian/mingguan/bulanan/tahunan) DAN
+                isi rekomendasi manual (1 field "rekomendasi", tiap baris = 1
+                poin, jumlah bebas). Backend (LaporanController::generateWord)
+                pakai filter yang sama persis kayak yang dipakai buat nampilin
+                data di tab Ringkasan/Visualisasi/Rekap, dan poin rekomendasi
+                persis apa yang diketik user di sini (lihat
+                isiRekomendasiManual()) — bukan auto-generate lagi.
+                =====================================================================
+            --}}
+            <form method="GET" action="{{ route('laporan.generate') }}" class="flex justify-end mt-4">
+                <input type="hidden" name="jenis" :value="jenis">
+
+                <input type="hidden" name="harian_tanggal" :value="harian.tanggal">
+                <input type="hidden" name="harian_skpd" :value="harian.skpd">
+                <input type="hidden" name="harian_status" :value="harian.status">
+
+                <input type="hidden" name="mingguan_mulai" :value="mingguan.mulai">
+                <input type="hidden" name="mingguan_selesai" :value="mingguan.selesai">
+                <input type="hidden" name="mingguan_skpd" :value="mingguan.skpd">
+                <input type="hidden" name="mingguan_status" :value="mingguan.status">
+
+                <input type="hidden" name="bulanan_periode" :value="bulanan.periode">
+                <input type="hidden" name="bulanan_tahun" :value="bulanan.tahun">
+                <input type="hidden" name="bulanan_skpd" :value="bulanan.skpd">
+                <input type="hidden" name="bulanan_status" :value="bulanan.status">
+
+                <input type="hidden" name="tahunan_tahun" :value="tahunan.tahun">
+                <input type="hidden" name="tahunan_skpd" :value="tahunan.skpd">
+                <input type="hidden" name="tahunan_status" :value="tahunan.status">
+
+                <input type="hidden" name="rekomendasi" :value="rekomendasi">
+
+                <button type="submit" class="flex items-center gap-2 bg-navy text-white text-sm font-semibold rounded-lg px-5 py-2.5 hover:bg-navy-dark">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M9 12h6M9 16h6M9 8h2"/>
                     </svg>
                     Generate Report
                 </button>
-            </div>
+            </form>
         </div>
     </section>
 

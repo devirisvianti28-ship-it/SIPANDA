@@ -11,7 +11,8 @@ use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\BannerController;
 use App\Http\Controllers\PengaduanImportController;
 use App\Http\Controllers\ProfilController;
-use App\Http\Controllers\UserController; 
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\PengaduanController;
 
 /*
 |--------------------------------------------------------------------------
@@ -88,5 +89,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::delete('/manajemen-pengguna/{user}', [UserController::class, 'destroy'])
         ->name('manajemen-pengguna.destroy');
+        
+    Route::get('/laporan/generate', [LaporanController::class, 'generateWord'])
+        ->name('laporan.generate');
 
+    Route::get('/laporan/pengaduan', [PengaduanController::class, 'index'])
+    ->name('laporan.pengaduan');
 });

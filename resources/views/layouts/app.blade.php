@@ -41,93 +41,196 @@
         .nav-item:hover:not(.active) { background-color: rgba(255,255,255,0.06); }
         .card-shadow { box-shadow: 0 1px 3px rgba(16,24,40,.06), 0 1px 2px rgba(16,24,40,.04); }
         [x-cloak] { display: none !important; }
+        /* biar transisi lebar sidebar & margin konten mulus */
+        #sidebar, #main-wrapper { transition: all .25s ease; }
+        .nav-label { transition: opacity .15s ease; }
     </style>
 
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
 
     @stack('styles')
 </head>
-<body class="text-slate-800" x-data="{ logoutModal: false }">
+<body class="text-slate-800"
+      x-data="{
+          logoutModal: false,
+          sidebarCollapsed: localStorage.getItem('sg_sidebar_collapsed') === 'true',
+          mobileOpen: false
+      }"
+      x-init="$watch('sidebarCollapsed', value => localStorage.setItem('sg_sidebar_collapsed', value))">
+
     <div class="flex min-h-screen">
 
-        {{-- ============ SIDEBAR (STATIS) ============ --}}
-        <aside class="w-56 bg-navy text-white flex flex-col fixed inset-y-0 left-0 z-30">
-            <div class="flex items-center gap-3 px-5 py-6">
-                <div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center overflow-hidden shrink-0">
-                    <img src="{{ asset('images/10.jpeg') }}" alt="Logo SAPA GARUT" class="w-full h-full object-cover">
+        {{-- ============ OVERLAY (MOBILE) ============ --}}
+        <div x-show="mobileOpen" x-cloak
+             @click="mobileOpen = false"
+             class="fixed inset-0 bg-slate-900/50 z-20 md:hidden"
+             x-transition:enter="transition-opacity ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition-opacity ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"></div>
+
+        {{-- ============ SIDEBAR ============ --}}
+        <aside id="sidebar"
+               :class="[
+                   sidebarCollapsed ? 'md:w-20' : 'md:w-72',
+                   mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+               ]"
+               class="w-72 bg-navy text-white flex flex-col fixed inset-y-0 left-0 z-30">
+
+            {{-- Header sidebar: logo + judul + tombol hamburger (sejajar) --}}
+            <div class="flex items-center gap-3 px-4 py-6" :class="sidebarCollapsed ? 'md:justify-center md:px-0' : 'justify-between'">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center overflow-hidden shrink-0">
+                        <img src="{{ asset('images/10.jpeg') }}" alt="Logo SAPA GARUT" class="w-full h-full object-cover">
+                    </div>
+                    <div class="min-w-0" x-show="!sidebarCollapsed" x-transition x-cloak>
+                        <p class="font-extrabold leading-tight tracking-wide truncate">SAPA GARUT</p>
+                        <p class="text-[11px] text-blue-100/80 leading-tight">Sistem Pengelolaan Aduan</p>
+                    </div>
                 </div>
-                <div>
-                    <p class="font-extrabold leading-tight tracking-wide">SAPA GARUT</p>
-                    <p class="text-[11px] text-blue-100/80 leading-tight">Sistem Pengelolaan Aduan</p>
-                </div>
+
+                {{-- Tombol Hamburger (khusus desktop, collapse jadi mode ikon) --}}
+                <button type="button"
+                        @click="sidebarCollapsed = !sidebarCollapsed"
+                        class="hidden md:flex items-center justify-center w-8 h-8 rounded-lg text-blue-100/80 hover:bg-white/10 transition shrink-0"
+                        x-show="!sidebarCollapsed" x-cloak>
+                    <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
             </div>
+
+            {{-- Saat collapsed, hamburger dipindah ke bawah logo, tetap center --}}
+            <button type="button"
+                    @click="sidebarCollapsed = !sidebarCollapsed"
+                    x-show="sidebarCollapsed" x-cloak
+                    class="hidden md:flex items-center justify-center mx-auto mb-2 w-9 h-9 rounded-lg text-blue-100/80 hover:bg-white/10 transition">
+                <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
 
             <nav class="flex-1 mt-2 px-3 space-y-1">
                 <a href="{{ route('dashboard') }}"
-                   class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }} flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('dashboard') ? '' : 'text-blue-100/90' }} font-medium">
+                   class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }} flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('dashboard') ? '' : 'text-blue-100/90' }} font-medium"
+                   :class="sidebarCollapsed && 'md:justify-center'"
+                   title="Dashboard">
                     <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/>
                         <rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
                     </svg>
-                    Dashboard
+                    <span class="nav-label" x-show="!sidebarCollapsed" x-cloak>Dashboard</span>
                 </a>
                 <a href="{{ route('data-pengaduan') }}"
-                   class="nav-item {{ request()->routeIs('data-pengaduan') ? 'active' : '' }} flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('data-pengaduan') ? '' : 'text-blue-100/90' }} font-medium">
+                   class="nav-item {{ request()->routeIs('data-pengaduan') ? 'active' : '' }} flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('data-pengaduan') ? '' : 'text-blue-100/90' }} font-medium"
+                   :class="sidebarCollapsed && 'md:justify-center'"
+                   title="Data Pengaduan">
                     <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path d="M4 5h16M4 5a2 2 0 00-2 2v9a2 2 0 002 2h11l3 3v-3h1a2 2 0 002-2V7a2 2 0 00-2-2H4z"/>
                     </svg>
-                    Data Pengaduan
+                    <span class="nav-label" x-show="!sidebarCollapsed" x-cloak>Data Pengaduan</span>
                 </a>
                 <a href="{{ route('monitoring-skpd') }}"
-                   class="nav-item {{ request()->routeIs('monitoring-skpd') ? 'active' : '' }} flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('monitoring-skpd') ? '' : 'text-blue-100/90' }} font-medium">
+                   class="nav-item {{ request()->routeIs('monitoring-skpd') ? 'active' : '' }} flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('monitoring-skpd') ? '' : 'text-blue-100/90' }} font-medium"
+                   :class="sidebarCollapsed && 'md:justify-center'"
+                   title="Monitoring SKPD">
                     <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 13v4M12 9v8M16 6v11"/>
                     </svg>
-                    Monitoring SKPD
+                    <span class="nav-label" x-show="!sidebarCollapsed" x-cloak>Monitoring SKPD</span>
                 </a>
-                <a href="{{ route('laporan') }}"
-                   class="nav-item {{ request()->routeIs('laporan') ? 'active' : '' }} flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('laporan') ? '' : 'text-blue-100/90' }} font-medium">
-                    <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M9 12h6M9 16h6M9 8h2"/>
-                    </svg>
-                    Laporan
-                </a>
+
+                {{-- ===== MENU LAPORAN (DROPDOWN) ===== --}}
+                <div x-data="{ openLaporan: {{ request()->routeIs('laporan') || request()->routeIs('laporan.*') ? 'true' : 'false' }} }">
+                    <button type="button"
+                            @click="sidebarCollapsed ? (sidebarCollapsed = false, openLaporan = true) : (openLaporan = !openLaporan)"
+                            class="nav-item {{ request()->routeIs('laporan') || request()->routeIs('laporan.*') ? 'active' : '' }} w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('laporan') || request()->routeIs('laporan.*') ? '' : 'text-blue-100/90' }} font-medium"
+                            :class="sidebarCollapsed && 'md:justify-center'"
+                            title="Laporan">
+                        <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M9 12h6M9 16h6M9 8h2"/>
+                        </svg>
+                        <span class="nav-label flex-1 text-left" x-show="!sidebarCollapsed" x-cloak>Laporan</span>
+                        <svg x-show="!sidebarCollapsed" x-cloak
+                             class="w-3.5 h-3.5 shrink-0 transition-transform"
+                             :class="openLaporan && 'rotate-180'"
+                             fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+
+                    <div x-show="openLaporan && !sidebarCollapsed" x-cloak
+                         x-transition:enter="transition ease-out duration-150"
+                         x-transition:enter-start="opacity-0 -translate-y-1"
+                         x-transition:enter-end="opacity-100 translate-y-0"
+                         class="mt-1 ml-6 pl-3 border-l border-white/15 space-y-1">
+                        <a href="{{ route('laporan') }}"
+                           class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm {{ request()->routeIs('laporan') ? 'bg-white/10 text-white font-semibold' : 'text-blue-100/80 hover:bg-white/5' }}">
+                            <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m-2-2h4"/>
+                            </svg>
+                            Generate Laporan
+                        </a>
+                        <a href="{{ route('laporan.pengaduan') }}"
+                           class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm {{ request()->routeIs('laporan.pengaduan') ? 'bg-white/10 text-white font-semibold' : 'text-blue-100/80 hover:bg-white/5' }}">
+                            <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="4" width="18" height="4" rx="1"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 8v10a1 1 0 001 1h12a1 1 0 001-1V8"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M10 12h4"/>
+                            </svg>
+                            Arsip Laporan
+                        </a>
+                    </div>
+                </div>
+                {{-- ===== END MENU LAPORAN ===== --}}
+
                 <a href="{{ route('kelola-banner') }}"
-                   class="nav-item {{ request()->routeIs('kelola-banner*') ? 'active' : '' }} flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('kelola-banner*') ? '' : 'text-blue-100/90' }} font-medium">
+                   class="nav-item {{ request()->routeIs('kelola-banner*') ? 'active' : '' }} flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('kelola-banner*') ? '' : 'text-blue-100/90' }} font-medium"
+                   :class="sidebarCollapsed && 'md:justify-center'"
+                   title="Kelola Banner">
                     <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M8 5v4"/>
                     </svg>
-                    Kelola Banner
+                    <span class="nav-label" x-show="!sidebarCollapsed" x-cloak>Kelola Banner</span>
                 </a>
 
-                {{-- ===== BARU: Manajemen Pengguna =====
+                {{-- ===== Manajemen Pengguna =====
                      Kalau mau dibatasi cuma buat Master Admin, bungkus <a> ini dengan:
                      @if(auth()->user()->peran === 'master_admin')  ...  @endif
                 --}}
                 <a href="{{ route('manajemen-pengguna.index') }}"
-                   class="nav-item {{ request()->routeIs('manajemen-pengguna.*') ? 'active' : '' }} flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('manajemen-pengguna.*') ? '' : 'text-blue-100/90' }} font-medium">
+                   class="nav-item {{ request()->routeIs('manajemen-pengguna.*') ? 'active' : '' }} flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('manajemen-pengguna.*') ? '' : 'text-blue-100/90' }} font-medium"
+                   :class="sidebarCollapsed && 'md:justify-center'"
+                   title="Manajemen Pengguna">
                     <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m5-4a4 4 0 100-8 4 4 0 000 8zm6 4a4 4 0 10-8 0"/>
                     </svg>
-                    Manajemen Pengguna
+                    <span class="nav-label" x-show="!sidebarCollapsed" x-cloak>Manajemen Pengguna</span>
                 </a>
 
                 <a href="{{ route('profil') }}"
-                   class="nav-item {{ request()->routeIs('profil') ? 'active' : '' }} flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('profil') ? '' : 'text-blue-100/90' }} font-medium">
+                   class="nav-item {{ request()->routeIs('profil') ? 'active' : '' }} flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('profil') ? '' : 'text-blue-100/90' }} font-medium"
+                   :class="sidebarCollapsed && 'md:justify-center'"
+                   title="Profil">
                     <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>
                     </svg>
-                    Profil
+                    <span class="nav-label" x-show="!sidebarCollapsed" x-cloak>Profil</span>
                 </a>
             </nav>
 
             <div class="px-3 pb-6">
                 <button type="button" @click="logoutModal = true"
-                        class="nav-item w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm text-blue-100/90 font-medium">
+                        class="nav-item w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm text-blue-100/90 font-medium"
+                        :class="sidebarCollapsed && 'md:justify-center'"
+                        title="Keluar">
                     <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path d="M17 16l4-4m0 0l-4-4m4 4H7"/><path d="M7 4H5a2 2 0 00-2 2v12a2 2 0 002 2h2"/>
                     </svg>
-                    Keluar
+                    <span x-show="!sidebarCollapsed" x-cloak>Keluar</span>
                 </button>
             </div>
         </aside>
@@ -138,19 +241,35 @@
         </form>
 
         {{-- ============ MAIN CONTENT ============ --}}
-        <div class="flex-1 ml-56 min-w-0">
+        <div id="main-wrapper"
+             :class="sidebarCollapsed ? 'md:ml-20' : 'md:ml-72'"
+             class="flex-1 ml-0 min-w-0">
 
             {{-- TOP BAR --}}
-            <header class="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between sticky top-0 z-20">
-                <div class="relative w-full max-w-md">
+            <header class="bg-white border-b border-slate-200 px-4 md:px-8 py-4 flex items-center justify-between sticky top-0 z-20">
+                <div class="flex items-center gap-3 w-full">
+                    {{-- Tombol Hamburger (mobile) --}}
+                    <button type="button" @click="mobileOpen = !mobileOpen"
+                            class="md:hidden shrink-0 w-10 h-10 flex items-center justify-center rounded-lg text-navy hover:bg-slate-100">
+                        <svg x-show="!mobileOpen" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                        <svg x-show="mobileOpen" x-cloak class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+
+                    <div class="relative w-full max-w-md">
+                    </div>
                 </div>
 
-                <div class="flex items-center gap-5 ml-6">
-                    <a href="{{ route('profil') }}" class="text-navy">
+                <div class="flex items-center gap-5 ml-6 shrink-0">
+                    <button class="relative">
+                    <a href="{{ route('profil') }}" class="text-navy hidden sm:inline-flex">
                     </a>
 
                     <a href="{{ route('profil') }}" class="flex items-center gap-3">
-                        <div class="text-right leading-tight">
+                        <div class="text-right leading-tight hidden sm:block">
                             <p class="text-sm font-semibold text-slate-800">{{ auth()->user()->nama_lengkap ?? auth()->user()->name }}</p>
                             <p class="text-xs text-slate-400">{{ auth()->user()->peran ?? 'Pengguna' }}</p>
                         </div>
@@ -167,7 +286,7 @@
                 </div>
             </header>
 
-            <main class="p-8 overflow-x-hidden">
+            <main class="p-4 md:p-8 overflow-x-hidden">
                 @yield('content')
             </main>
         </div>

@@ -172,6 +172,16 @@
         - Catatan teks bebas yang dulu ada di sini (kolom `keterangan` di DB)
           sudah tidak ada slot edit-nya langsung di tabel, tapi datanya
           tetap tersimpan & masih ditampilkan di panel Detail Pengaduan.
+
+        CATATAN STATUS KOSONG (PENTING):
+        - `$row->status` sekarang bisa NULL (data baru dari Excel yang
+          belum pernah disentuh admin). NULL harus tampil NETRAL/KOSONG
+          (abu-abu, teks "-" / "Belum Diisi"), BUKAN otomatis dianggap
+          "Belum Selesai" (merah). "Belum Selesai" cuma dipakai kalau
+          admin SUDAH pernah memilih itu secara eksplisit di dropdown.
+        - Dropdown Keterangan sekarang punya opsi placeholder kosong
+          ("- Pilih Status -") yang otomatis kepilih kalau status masih
+          NULL, supaya admin sadar ini kolom yang belum diisi.
     --}}
     <div id="pengaduan-table-card" class="bg-white rounded-2xl card-shadow overflow-hidden"
          data-next-page-url="{{ $pengaduan->nextPageUrl() }}">
@@ -225,7 +235,7 @@
                         data-waktu="{{ $row->waktu ?? '-' }}"
                         data-pelapor="{{ $row->pelapor ?? '-' }}"
                         data-sudah-ditanggapi="{{ $row->status === 'Selesai' ? '1' : '0' }}"
-                        data-status="{{ $row->status ?? 'Belum Selesai' }}"
+                        data-status="{{ $row->status ?? '' }}"
                         data-keterangan="{{ $row->keterangan ?? '-' }}"
                         data-klasifikasi="{{ $row->klasifikasi ?? '-' }}"
                         data-id-kategori="{{ $row->id_kategori ?? '-' }}"
@@ -257,22 +267,30 @@
                         <td class="border border-slate-200 px-2 py-1.5 text-slate-500 whitespace-nowrap">{{ $row->waktu ?? '-' }}</td>
                         <td class="border border-slate-200 px-2 py-1.5 font-semibold text-slate-700 max-w-[140px] truncate" title="{{ $row->pelapor }}">{{ $row->pelapor ?? '-' }}</td>
 
+                        {{-- ===== TANGGAPAN: netral kalau status masih NULL (belum diisi admin) ===== --}}
                         <td class="border border-slate-200 px-2 py-1.5 whitespace-nowrap">
                             <input type="hidden" class="js-tanggapan-value" data-field="sudah_ditanggapi" value="{{ $row->status === 'Selesai' ? '1' : '0' }}">
-                            <span class="js-tanggapan-badge inline-flex text-[11px] font-semibold rounded-full px-2.5 py-1 min-w-[128px] justify-center
-                                {{ $row->status === 'Selesai' ? 'bg-blue-50 text-navy' : 'bg-red-50 text-red-500' }}">
-                                {{ $row->status === 'Selesai' ? 'Sudah Ada Tanggapan' : 'Belum Ada Tanggapan' }}
-                            </span>
+                            @if(is_null($row->status))
+                                <span class="js-tanggapan-badge inline-flex text-[11px] font-semibold rounded-full px-2.5 py-1 min-w-[128px] justify-center bg-slate-100 text-slate-400">
+                                    Belum Diisi
+                                </span>
+                            @else
+                                <span class="js-tanggapan-badge inline-flex text-[11px] font-semibold rounded-full px-2.5 py-1 min-w-[128px] justify-center
+                                    {{ $row->status === 'Selesai' ? 'bg-blue-50 text-navy' : 'bg-red-50 text-red-500' }}">
+                                    {{ $row->status === 'Selesai' ? 'Sudah Ada Tanggapan' : 'Belum Ada Tanggapan' }}
+                                </span>
+                            @endif
                         </td>
 
-                        {{-- ===== KETERANGAN: dropdown Selesai / Belum Selesai yang bisa diedit ===== --}}
+                        {{-- ===== KETERANGAN: dropdown Selesai / Belum Selesai, dengan placeholder kosong ===== --}}
                         <td class="border border-slate-200 px-2 py-1.5 whitespace-nowrap">
                             <select class="js-status-select appearance-none text-[11px] font-semibold rounded-full pl-2.5 pr-6 py-1 border-0 cursor-pointer min-w-[110px] bg-no-repeat bg-[right_0.4rem_center] bg-[length:10px]
-                                {{ $row->status === 'Selesai' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500' }}"
+                                {{ is_null($row->status) ? 'bg-slate-100 text-slate-400' : ($row->status === 'Selesai' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500') }}"
                                 style="background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%2394a3b8%22 stroke-width=%223%22><path d=%22M6 9l6 6 6-6%22/></svg>');"
                                 data-id="{{ $row->id }}" data-field="status">
+                                <option value="" @selected(is_null($row->status)) disabled hidden>- Pilih Status -</option>
                                 <option value="Selesai" @selected($row->status === 'Selesai')>Selesai</option>
-                                <option value="Belum Selesai" @selected($row->status !== 'Selesai')>Belum Selesai</option>
+                                <option value="Belum Selesai" @selected($row->status === 'Belum Selesai')>Belum Selesai</option>
                             </select>
                         </td>
 
@@ -572,7 +590,7 @@
             if (hiddenInput) hiddenInput.value = sudahDitanggapi ? '1' : '0';
             if (badge) {
                 badge.textContent = sudahDitanggapi ? 'Sudah Ada Tanggapan' : 'Belum Ada Tanggapan';
-                badge.classList.remove('bg-blue-50', 'text-navy', 'bg-red-50', 'text-red-500');
+                badge.classList.remove('bg-slate-100', 'text-slate-400', 'bg-blue-50', 'text-navy', 'bg-red-50', 'text-red-500');
                 badge.classList.add(...(sudahDitanggapi ? ['bg-blue-50', 'text-navy'] : ['bg-red-50', 'text-red-500']));
             }
             row.dataset.sudahDitanggapi = sudahDitanggapi ? '1' : '0';
@@ -591,6 +609,8 @@
 
                     // ============ OTOMATIS: Tanggapan selalu ngikut Status.
                     // Selesai -> Sudah Ada Tanggapan. Belum Selesai -> Belum Ada Tanggapan.
+                    // (Placeholder kosong "" tidak bisa dipilih lagi sekali admin
+                    // memilih salah satu opsi, karena opsinya disabled+hidden.)
                     updateTanggapanBadge(row, this.value === 'Selesai');
 
                     const payload = {
@@ -602,7 +622,7 @@
                     };
 
                     kirimUpdate(id, payload, () => {
-                        this.classList.remove('bg-green-50', 'text-green-600', 'bg-red-50', 'text-red-500');
+                        this.classList.remove('bg-slate-100', 'text-slate-400', 'bg-green-50', 'text-green-600', 'bg-red-50', 'text-red-500');
                         this.classList.add(...(this.value === 'Selesai' ? ['bg-green-50', 'text-green-600'] : ['bg-red-50', 'text-red-500']));
                     });
                 });
@@ -656,16 +676,27 @@
             if (d.urlDokumen) { dokLink.href = d.urlDokumen; dokLink.classList.remove('hidden'); } else { dokLink.classList.add('hidden'); }
 
             const tanggapanBadge = document.getElementById('detail-tanggapan-badge');
-            const sudahDitanggapi = d.sudahDitanggapi === '1';
-            tanggapanBadge.textContent = sudahDitanggapi ? 'Sudah Ada Tanggapan' : 'Belum Ada Tanggapan';
-            tanggapanBadge.className = 'text-xs font-semibold rounded-full px-3 py-1.5 ' +
-                (sudahDitanggapi ? 'bg-blue-50 text-navy' : 'bg-red-50 text-red-500');
+            const statusKosong = !d.status || d.status.trim() === '';
+            if (statusKosong) {
+                tanggapanBadge.textContent = 'Belum Diisi';
+                tanggapanBadge.className = 'text-xs font-semibold rounded-full px-3 py-1.5 bg-slate-100 text-slate-400';
+            } else {
+                const sudahDitanggapi = d.sudahDitanggapi === '1';
+                tanggapanBadge.textContent = sudahDitanggapi ? 'Sudah Ada Tanggapan' : 'Belum Ada Tanggapan';
+                tanggapanBadge.className = 'text-xs font-semibold rounded-full px-3 py-1.5 ' +
+                    (sudahDitanggapi ? 'bg-blue-50 text-navy' : 'bg-red-50 text-red-500');
+            }
 
             const statusBadge = document.getElementById('detail-status-badge');
-            const selesai = d.status === 'Selesai';
-            statusBadge.textContent = selesai ? 'Selesai' : 'Belum Selesai';
-            statusBadge.className = 'text-xs font-semibold rounded-full px-3 py-1.5 ' +
-                (selesai ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500');
+            if (statusKosong) {
+                statusBadge.textContent = 'Belum Diisi';
+                statusBadge.className = 'text-xs font-semibold rounded-full px-3 py-1.5 bg-slate-100 text-slate-400';
+            } else {
+                const selesai = d.status === 'Selesai';
+                statusBadge.textContent = selesai ? 'Selesai' : 'Belum Selesai';
+                statusBadge.className = 'text-xs font-semibold rounded-full px-3 py-1.5 ' +
+                    (selesai ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500');
+            }
 
             document.getElementById('detail-status-laporan-raw').textContent = (d.statusLaporanRaw && d.statusLaporanRaw.trim() !== '') ? d.statusLaporanRaw : '-';
             document.getElementById('detail-keterangan').textContent = (d.keterangan && d.keterangan.trim() !== '') ? d.keterangan : '-';

@@ -20,6 +20,26 @@ use Carbon\Carbon;
  * PERFORMA: proses insert/update dilakukan lewat upsert() batch
  * (bukan query satu-satu per baris), supaya cepat walau koneksi
  * ke database cloud (Supabase) punya latency.
+ *
+ * CATATAN STATUS (Tanggapan & Keterangan):
+ * - File Excel dari LAPOR.go.id TIDAK punya kolom Tanggapan/Keterangan.
+ *   Kolom "Status Laporan" di Excel itu status internal LAPOR.go.id
+ *   (Ditutup oleh Admin/Sistem, Diarsipkan, dll), BUKAN representasi
+ *   dari "Selesai"/"Belum Selesai" yang dipakai di aplikasi ini.
+ * - Karena itu, `status` TIDAK boleh ditebak/di-derive otomatis dari
+ *   kolom "Status Laporan", DAN TIDAK boleh diisi default apapun
+ *   ("Selesai" maupun "Belum Selesai"). Data baru dari Excel masuk
+ *   dengan `status` = NULL (benar-benar kosong / belum ditentukan),
+ *   dan admin yang menentukan sendiri lewat dropdown Keterangan di
+ *   halaman Data Pengaduan. Kalau di-default ke 'Belum Selesai',
+ *   itu keliatan seolah-olah sudah ada keputusan padahal belum.
+ * - `status` juga sengaja TIDAK dimasukkan ke $updateColumns, supaya
+ *   kalau file Excel yang sama di-import ulang, status yang sudah
+ *   di-set manual oleh admin tidak ketimpa balik ke NULL/default.
+ *
+ * PENTING: kolom `status` di tabel `pengaduan` harus NULLABLE di
+ * database. Kalau migration-nya masih NOT NULL, perlu bikin migration
+ * baru untuk ubah jadi nullable, kalau tidak insert bakal error.
  */
 class PengaduanExcelImporter
 {
@@ -81,7 +101,10 @@ class PengaduanExcelImporter
                 'id_instansi_terdisposisi'    => $this->col($row, $colIndex, 'ID Instansi Terdisposisi'),
                 'skpd'                        => $this->col($row, $colIndex, 'Instansi Terdisposisi'),
                 'status_laporan_raw'          => $this->col($row, $colIndex, 'Status Laporan'),
-                'status'                      => $this->mapStatus((string) ($row[$colIndex['Status Laporan']] ?? '')),
+                // NULL = benar-benar kosong / belum ditentukan. Ini kolom yang
+                // dikendalikan admin lewat dropdown Keterangan (atau importer
+                // Word/PDF), bukan diturunkan dari data Excel.
+                'status'                      => null,
                 'alasan_tunda_arsip'          => $this->col($row, $colIndex, 'Alasan Tunda/Arsip'),
                 'provinsi'                    => $this->col($row, $colIndex, 'Provinsi'),
                 'kabupaten'                   => $this->col($row, $colIndex, 'Kota/Kabupaten'),
@@ -111,13 +134,15 @@ class PengaduanExcelImporter
         $inserted = count($trackingIds) - count($existingIds);
         $updated = count($existingIds);
 
-        // Kolom yang boleh di-overwrite kalau Tracking ID sudah ada (JANGAN masukkan
-        // 'tanggapan' & 'keterangan' di sini, biar data dari Word/PDF gak ketimpa Excel).
+        // Kolom yang boleh di-overwrite kalau Tracking ID sudah ada (data mentah dari Excel).
+        // 'status' SENGAJA TIDAK dimasukkan di sini — itu kolom yang dikendalikan admin
+        // lewat dropdown Keterangan (dan/atau importer Word/PDF), jadi tidak boleh
+        // ketimpa balik ke default 'Belum Selesai' setiap kali Excel yang sama di-import ulang.
         $updateColumns = [
             'tanggal', 'waktu', 'pelapor', 'klasifikasi', 'id_kategori', 'kategori',
             'judul', 'isi_awal', 'isi_akhir', 'tipe_laporan', 'sumber_laporan',
             'instansi_induk', 'id_instansi_terdisposisi', 'skpd', 'status_laporan_raw',
-            'status', 'alasan_tunda_arsip', 'provinsi', 'kabupaten', 'kecamatan',
+            'alasan_tunda_arsip', 'provinsi', 'kabupaten', 'kecamatan',
             'kelurahan', 'nomor_sk', 'url_sk', 'url_dokumen_laporan_tahunan',
             'laporan_setwapres', 'rating', 'excel_synced_at', 'updated_at',
         ];
@@ -152,23 +177,5 @@ class PengaduanExcelImporter
         } catch (\Throwable) {
             return null;
         }
-    }
-
-    /**
-     * Status Laporan di Excel tidak pernah literal "Selesai" / "Belum Selesai",
-     * tapi berupa: "Ditutup oleh Admin", "Ditutup oleh Sistem",
-     * "Diarsipkan oleh Admin", "Diarsipkan oleh Sistem", "Ditanggapi oleh Pelapor", dst.
-     *
-     * Sesuaikan mapping ini dengan aturan resmi kantor kalau perlu.
-     */
-    private function mapStatus(string $statusLaporan): string
-    {
-        $s = strtolower($statusLaporan);
-
-        if (str_contains($s, 'ditutup') || str_contains($s, 'diarsipkan')) {
-            return 'Selesai';
-        }
-
-        return 'Belum Selesai';
     }
 }
