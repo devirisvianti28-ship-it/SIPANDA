@@ -29,7 +29,18 @@ class LoginController extends Controller
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
-            return redirect()->intended('/dashboard');
+
+            $user = Auth::user();
+
+            // Kepala Dinas (dan HANYA Kepala Dinas — bukan Master Admin/Pengelola
+            // yang kebetulan juga dikasih role kepala_dinas) diarahkan ke
+            // dashboard read-only miliknya sendiri. Selain itu (Master Admin
+            // & Pengelola) tetap ke dashboard umum.
+            if ($user->hasRole('kepala_dinas') && ! $user->hasAnyRole(['master_admin', 'pengelola'])) {
+                return redirect()->intended(route('kepala-dinas.dashboard'));
+            }
+
+            return redirect()->intended(route('dashboard'));
         }
 
         return back()->withErrors([

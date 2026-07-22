@@ -142,49 +142,19 @@
                     <span class="nav-label" x-show="!sidebarCollapsed" x-cloak>Monitoring SKPD</span>
                 </a>
 
-                {{-- ===== MENU LAPORAN (DROPDOWN) ===== --}}
-                <div x-data="{ openLaporan: {{ request()->routeIs('laporan') || request()->routeIs('laporan.*') ? 'true' : 'false' }} }">
-                    <button type="button"
-                            @click="sidebarCollapsed ? (sidebarCollapsed = false, openLaporan = true) : (openLaporan = !openLaporan)"
-                            class="nav-item {{ request()->routeIs('laporan') || request()->routeIs('laporan.*') ? 'active' : '' }} w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('laporan') || request()->routeIs('laporan.*') ? '' : 'text-blue-100/90' }} font-medium"
-                            :class="sidebarCollapsed && 'md:justify-center'"
-                            title="Laporan">
-                        <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M9 12h6M9 16h6M9 8h2"/>
-                        </svg>
-                        <span class="nav-label flex-1 text-left" x-show="!sidebarCollapsed" x-cloak>Laporan</span>
-                        <svg x-show="!sidebarCollapsed" x-cloak
-                             class="w-3.5 h-3.5 shrink-0 transition-transform"
-                             :class="openLaporan && 'rotate-180'"
-                             fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                        </svg>
-                    </button>
-
-                    <div x-show="openLaporan && !sidebarCollapsed" x-cloak
-                         x-transition:enter="transition ease-out duration-150"
-                         x-transition:enter-start="opacity-0 -translate-y-1"
-                         x-transition:enter-end="opacity-100 translate-y-0"
-                         class="mt-1 ml-6 pl-3 border-l border-white/15 space-y-1">
-                        <a href="{{ route('laporan') }}"
-                           class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm {{ request()->routeIs('laporan') ? 'bg-white/10 text-white font-semibold' : 'text-blue-100/80 hover:bg-white/5' }}">
-                            <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m-2-2h4"/>
-                            </svg>
-                            Generate Laporan
-                        </a>
-                        <a href="{{ route('laporan.pengaduan') }}"
-                           class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm {{ request()->routeIs('laporan.pengaduan') ? 'bg-white/10 text-white font-semibold' : 'text-blue-100/80 hover:bg-white/5' }}">
-                            <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <rect x="3" y="4" width="18" height="4" rx="1"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 8v10a1 1 0 001 1h12a1 1 0 001-1V8"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M10 12h4"/>
-                            </svg>
-                            Arsip Laporan
-                        </a>
-                    </div>
-                </div>
+                {{-- ===== MENU LAPORAN (SINGLE LINK, BUKAN DROPDOWN) =====
+                     Khusus layout Kepala Dinas: cuma 1 tujuan yaitu Arsip Laporan.
+                     Beda dengan layout Pengelola yang punya submenu
+                     Generate Laporan + Arsip Laporan. --}}
+                <a href="{{ route('laporan.pengaduan') }}"
+                   class="nav-item {{ request()->routeIs('laporan.pengaduan') ? 'active' : '' }} flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('laporan.pengaduan') ? '' : 'text-blue-100/90' }} font-medium"
+                   :class="sidebarCollapsed && 'md:justify-center'"
+                   title="Laporan">
+                    <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M9 12h6M9 16h6M9 8h2"/>
+                    </svg>
+                    <span class="nav-label" x-show="!sidebarCollapsed" x-cloak>Laporan</span>
+                </a>
                 {{-- ===== END MENU LAPORAN ===== --}}
 
                 {{-- Catatan: Menu "Kelola Banner" & "Manajemen Pengguna" SENGAJA
