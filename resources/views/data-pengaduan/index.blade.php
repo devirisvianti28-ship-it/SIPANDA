@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends(auth()->user()->hasRole('kepala_dinas') ? 'layouts.app-kepala-dinas' : 'layouts.app')
 
 @section('title', 'Data Pengaduan')
 
@@ -32,11 +32,13 @@
             <p class="text-slate-500 mt-1">Monitoring dan tindak lanjut aspirasi masyarakat Kabupaten Garut.</p>
         </div>
 
+        @if(auth()->user()->hasAnyRole(['pengelola','master_admin']))
         <button type="button" @click="showImportModal = true"
                 class="bg-navy hover:bg-navy-dark text-white font-semibold text-sm px-5 py-3 rounded-xl flex items-center gap-2 card-shadow shrink-0">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
             Tambah Pengaduan
         </button>
+        @endif
     </div>
 
     {{-- ================= INFO FILTER SKPD AKTIF ================= --}}
@@ -182,6 +184,11 @@
         - Dropdown Keterangan sekarang punya opsi placeholder kosong
           ("- Pilih Status -") yang otomatis kepilih kalau status masih
           NULL, supaya admin sadar ini kolom yang belum diisi.
+
+        CATATAN ROLE (gabungan dengan tampilan-kepala-dinas):
+        - Dropdown Keterangan hanya BISA DIEDIT oleh role pengelola/master_admin.
+        - Untuk role kepala_dinas, kolom ini tampil sebagai badge read-only
+          (tidak bisa diklik/diubah), sesuai aturan akses read-only.
     --}}
     <div id="pengaduan-table-card" class="bg-white rounded-2xl card-shadow overflow-hidden"
          data-next-page-url="{{ $pengaduan->nextPageUrl() }}">
@@ -282,16 +289,24 @@
                             @endif
                         </td>
 
-                        {{-- ===== KETERANGAN: dropdown Selesai / Belum Selesai, dengan placeholder kosong ===== --}}
+                        {{-- ===== KETERANGAN: dropdown editable untuk Pengelola/Master Admin (dengan placeholder
+                             kosong kalau status masih NULL), badge read-only untuk Kepala Dinas ===== --}}
                         <td class="border border-slate-200 px-2 py-1.5 whitespace-nowrap">
-                            <select class="js-status-select appearance-none text-[11px] font-semibold rounded-full pl-2.5 pr-6 py-1 border-0 cursor-pointer min-w-[110px] bg-no-repeat bg-[right_0.4rem_center] bg-[length:10px]
-                                {{ is_null($row->status) ? 'bg-slate-100 text-slate-400' : ($row->status === 'Selesai' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500') }}"
-                                style="background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%2394a3b8%22 stroke-width=%223%22><path d=%22M6 9l6 6 6-6%22/></svg>');"
-                                data-id="{{ $row->id }}" data-field="status">
-                                <option value="" @selected(is_null($row->status)) disabled hidden>- Pilih Status -</option>
-                                <option value="Selesai" @selected($row->status === 'Selesai')>Selesai</option>
-                                <option value="Belum Selesai" @selected($row->status === 'Belum Selesai')>Belum Selesai</option>
-                            </select>
+                            @if(auth()->user()->hasAnyRole(['pengelola','master_admin']))
+                                <select class="js-status-select appearance-none text-[11px] font-semibold rounded-full pl-2.5 pr-6 py-1 border-0 cursor-pointer min-w-[110px] bg-no-repeat bg-[right_0.4rem_center] bg-[length:10px]
+                                    {{ is_null($row->status) ? 'bg-slate-100 text-slate-400' : ($row->status === 'Selesai' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500') }}"
+                                    style="background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%2394a3b8%22 stroke-width=%223%22><path d=%22M6 9l6 6 6-6%22/></svg>');"
+                                    data-id="{{ $row->id }}" data-field="status">
+                                    <option value="" @selected(is_null($row->status)) disabled hidden>- Pilih Status -</option>
+                                    <option value="Selesai" @selected($row->status === 'Selesai')>Selesai</option>
+                                    <option value="Belum Selesai" @selected($row->status === 'Belum Selesai')>Belum Selesai</option>
+                                </select>
+                            @else
+                                <span class="inline-flex text-[11px] font-semibold rounded-full px-2.5 py-1 min-w-[110px] justify-center
+                                    {{ is_null($row->status) ? 'bg-slate-100 text-slate-400' : ($row->status === 'Selesai' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500') }}">
+                                    {{ $row->status ?? 'Belum Diisi' }}
+                                </span>
+                            @endif
                         </td>
 
                         {{-- ===== STATUS PENYELESAIAN: read-only, nampilin status mentah dari Excel ===== --}}

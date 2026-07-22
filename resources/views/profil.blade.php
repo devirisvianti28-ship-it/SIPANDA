@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends(auth()->user()->hasRole('kepala_dinas') ? 'layouts.app-kepala-dinas' : 'layouts.app')
 
 @section('title', 'Profil')
 

@@ -113,8 +113,8 @@
             </button>
 
             <nav class="flex-1 mt-2 px-3 space-y-1">
-                <a href="{{ route('dashboard') }}"
-                   class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }} flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('dashboard') ? '' : 'text-blue-100/90' }} font-medium"
+                <a href="{{ route('kepala-dinas.dashboard') }}"
+                   class="nav-item {{ request()->routeIs('kepala-dinas.dashboard') ? 'active' : '' }} flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('kepala-dinas.dashboard') ? '' : 'text-blue-100/90' }} font-medium"
                    :class="sidebarCollapsed && 'md:justify-center'"
                    title="Dashboard">
                     <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -142,74 +142,23 @@
                     <span class="nav-label" x-show="!sidebarCollapsed" x-cloak>Monitoring SKPD</span>
                 </a>
 
-                {{-- ===== MENU LAPORAN (DROPDOWN) ===== --}}
-                <div x-data="{ openLaporan: {{ request()->routeIs('laporan') || request()->routeIs('laporan.*') ? 'true' : 'false' }} }">
-                    <button type="button"
-                            @click="sidebarCollapsed ? (sidebarCollapsed = false, openLaporan = true) : (openLaporan = !openLaporan)"
-                            class="nav-item {{ request()->routeIs('laporan') || request()->routeIs('laporan.*') ? 'active' : '' }} w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('laporan') || request()->routeIs('laporan.*') ? '' : 'text-blue-100/90' }} font-medium"
-                            :class="sidebarCollapsed && 'md:justify-center'"
-                            title="Laporan">
-                        <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M9 12h6M9 16h6M9 8h2"/>
-                        </svg>
-                        <span class="nav-label flex-1 text-left" x-show="!sidebarCollapsed" x-cloak>Laporan</span>
-                        <svg x-show="!sidebarCollapsed" x-cloak
-                             class="w-3.5 h-3.5 shrink-0 transition-transform"
-                             :class="openLaporan && 'rotate-180'"
-                             fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                        </svg>
-                    </button>
-
-                    <div x-show="openLaporan && !sidebarCollapsed" x-cloak
-                         x-transition:enter="transition ease-out duration-150"
-                         x-transition:enter-start="opacity-0 -translate-y-1"
-                         x-transition:enter-end="opacity-100 translate-y-0"
-                         class="mt-1 ml-6 pl-3 border-l border-white/15 space-y-1">
-                        <a href="{{ route('laporan') }}"
-                           class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm {{ request()->routeIs('laporan') ? 'bg-white/10 text-white font-semibold' : 'text-blue-100/80 hover:bg-white/5' }}">
-                            <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m-2-2h4"/>
-                            </svg>
-                            Generate Laporan
-                        </a>
-                        <a href="{{ route('laporan.pengaduan') }}"
-                           class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm {{ request()->routeIs('laporan.pengaduan') ? 'bg-white/10 text-white font-semibold' : 'text-blue-100/80 hover:bg-white/5' }}">
-                            <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <rect x="3" y="4" width="18" height="4" rx="1"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 8v10a1 1 0 001 1h12a1 1 0 001-1V8"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M10 12h4"/>
-                            </svg>
-                            Arsip Laporan
-                        </a>
-                    </div>
-                </div>
+                {{-- ===== MENU LAPORAN (SINGLE LINK, BUKAN DROPDOWN) =====
+                     Khusus layout Kepala Dinas: cuma 1 tujuan yaitu Arsip Laporan.
+                     Beda dengan layout Pengelola yang punya submenu
+                     Generate Laporan + Arsip Laporan. --}}
+                <a href="{{ route('laporan.pengaduan') }}"
+                   class="nav-item {{ request()->routeIs('laporan.pengaduan') ? 'active' : '' }} flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('laporan.pengaduan') ? '' : 'text-blue-100/90' }} font-medium"
+                   :class="sidebarCollapsed && 'md:justify-center'"
+                   title="Laporan">
+                    <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M9 12h6M9 16h6M9 8h2"/>
+                    </svg>
+                    <span class="nav-label" x-show="!sidebarCollapsed" x-cloak>Laporan</span>
+                </a>
                 {{-- ===== END MENU LAPORAN ===== --}}
 
-                <a href="{{ route('kelola-banner') }}"
-                   class="nav-item {{ request()->routeIs('kelola-banner*') ? 'active' : '' }} flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('kelola-banner*') ? '' : 'text-blue-100/90' }} font-medium"
-                   :class="sidebarCollapsed && 'md:justify-center'"
-                   title="Kelola Banner">
-                    <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M8 5v4"/>
-                    </svg>
-                    <span class="nav-label" x-show="!sidebarCollapsed" x-cloak>Kelola Banner</span>
-                </a>
-
-                {{-- ===== Manajemen Pengguna =====
-                     Kalau mau dibatasi cuma buat Master Admin, bungkus <a> ini dengan:
-                     @if(auth()->user()->peran === 'master_admin')  ...  @endif
-                --}}
-                <a href="{{ route('manajemen-pengguna.index') }}"
-                   class="nav-item {{ request()->routeIs('manajemen-pengguna.*') ? 'active' : '' }} flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('manajemen-pengguna.*') ? '' : 'text-blue-100/90' }} font-medium"
-                   :class="sidebarCollapsed && 'md:justify-center'"
-                   title="Manajemen Pengguna">
-                    <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m5-4a4 4 0 100-8 4 4 0 000 8zm6 4a4 4 0 10-8 0"/>
-                    </svg>
-                    <span class="nav-label" x-show="!sidebarCollapsed" x-cloak>Manajemen Pengguna</span>
-                </a>
+                {{-- Catatan: Menu "Kelola Banner" & "Manajemen Pengguna" SENGAJA
+                     tidak ditampilkan di layout Kepala Dinas ini. --}}
 
                 <a href="{{ route('profil') }}"
                    class="nav-item {{ request()->routeIs('profil') ? 'active' : '' }} flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm {{ request()->routeIs('profil') ? '' : 'text-blue-100/90' }} font-medium"
@@ -287,7 +236,7 @@
                     <a href="{{ route('profil') }}" class="flex items-center gap-3">
                         <div class="text-right leading-tight hidden sm:block">
                             <p class="text-sm font-semibold text-slate-800">{{ auth()->user()->nama_lengkap ?? auth()->user()->name }}</p>
-                            <p class="text-xs text-slate-400">{{ auth()->user()->peran ?? 'Pengguna' }}</p>
+                            <p class="text-xs text-slate-400">{{ auth()->user()->peran ?? 'Kepala Dinas' }}</p>
                         </div>
                         @if(auth()->user()->foto_profil ?? false)
                             <img src="{{ asset('storage/'.auth()->user()->foto_profil) }}"
